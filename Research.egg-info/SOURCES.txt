@@ -1,0 +1,10 @@
+setup.py
+Research.egg-info/PKG-INFO
+Research.egg-info/SOURCES.txt
+Research.egg-info/dependency_links.txt
+Research.egg-info/requires.txt
+Research.egg-info/top_level.txt
+data_pipeline/__init__.py
+data_pipeline/historical_data.py
+data_pipeline/news_collector.py
+data_pipeline/notebook/__init__.py
