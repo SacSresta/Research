@@ -34,10 +34,6 @@ def parse_args():
     
     return parser.parse_args()
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
-tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
 def preprocess_text(text):
     inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
@@ -65,6 +61,7 @@ if __name__ == "__main__":
         print(merged_df.tail(2))
         merged_df['sentiment_score'] = get_finbert_sentiment(merged_df['headline'])
         if categorical:
+            print("Converting Sentiment Score into Category")
             merged_df['sentiment_class'] = merged_df['headline'].apply(classify_sentiment)
             output_dir = 'sentiment_categorical'  
             output_file = f'merged_data_{args.symbol}_from_{args.start_date}_to_{args.end_date}.csv'  
