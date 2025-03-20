@@ -3,12 +3,12 @@ import requests
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
+import os
 
 
 
 
-
-def get_historical_data(start_date = '2020-01-01', symbol='AAPL'):
+def get_historical_data(start_date = '2020-01-01', symbol='AAPL',end_date = datetime.today().strftime("%Y-%m-%d")):
 
     def time_converter(time_str):
         """ Convert ISO 8601 timestamp to YYYY-MM-DD format. """
@@ -29,7 +29,7 @@ def get_historical_data(start_date = '2020-01-01', symbol='AAPL'):
 
     json_collector = []
     while True:
-        end_date = datetime.today().strftime("%Y-%m-%d")
+        end_date = end_date
         
         # Stop condition to prevent infinite loop
         if start_date >= end_date:
@@ -79,9 +79,9 @@ def get_historical_data(start_date = '2020-01-01', symbol='AAPL'):
     return json_collector
 
 
-def preprocess_data(symbol, start_date):
+def preprocess_data(symbol, start_date,end_date):
     # Load the data
-    json_data = get_historical_data(start_date=start_date,symbol=symbol)
+    json_data = get_historical_data(start_date=start_date,symbol=symbol,end_date =end_date)
     df = pd.DataFrame(json_data)
     df['Time'] = pd.DatetimeIndex(df['updated_at'])
     df['Ticker'] = symbol
@@ -99,17 +99,22 @@ def fix_data(df):
     return df_grouped
 
 
-def fetch_news_df(symbol, start_date):
+def fetch_news_df(symbol, start_date, end_date = datetime.today().strftime("%Y-%m-%d")):
     symbol = symbol
     start_date = start_date
-    df = preprocess_data(symbol, start_date)
+    df = preprocess_data(symbol, start_date,end_date)
     df = fix_data(df)
-    df.to_csv(f'{symbol}_from_{start_date}.csv')
+    output_dir = 'MERGED'  
+    output_file = f'merged_data_{symbol}_from_{start_date}.csv'  
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, output_file)
+    df.to_csv(output_path, index=False)
     return df
 
 if __name__ == "__main__":
     symbol = "TSLA"
     start_date = '2025-01-01'
-    df = fetch_news_df(symbol, start_date)  # Fetch the data for the specified symbol
+    end_date = '2025-03-01'
+    df = fetch_news_df(symbol, start_date, end_date)  # Fetch the data for the specified symbol
     print(df.head(10))
     
