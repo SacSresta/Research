@@ -1,9 +1,9 @@
+import tensorflow as tf
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout,GRU
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
-import tensorflow as tf
 from sklearn.metrics import  classification_report, confusion_matrix
 from models.data_preprocessor import preprocess_data
 import numpy as np
@@ -39,10 +39,9 @@ def train_model(X_train,y_train):
 
     history = model.fit(
         X_train, y_train,
-        epochs=50,
+        epochs=500,
         batch_size=32,
         validation_split=0.3,
-        callbacks=[early_stop],
         class_weight=class_weight,
         verbose=1
     )
@@ -60,8 +59,8 @@ def evaluate_model(X_test,y_test,model):
 
 
 if __name__ == "__main__":
-    path = '/home/sacsresta/Documents/RESEARCH/Project/sentiment/merged_data_AAPL_from_2024-01-01_to_2025-01-01.csv'
-    X_train,y_train,X_test,y_test = preprocess_data(path = path)
+    path = '/home/sacsresta/Documents/RESEARCH/Project/sentiment/merged_data_NVDA_from_2015-01-01_to_2025-03-01.csv'
+    X_train,y_train,X_test,y_test = preprocess_data(path = path,look_back=14)
     print(X_train)
     model, history = train_model(X_train,y_train)
     evaluate_model(X_test,y_test,model)

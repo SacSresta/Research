@@ -49,34 +49,32 @@ def classify_sentiment(text):
     predicted_class = sentiment_labels[torch.argmax(probs).item()]
     return predicted_class
 
-
-if __name__ == "__main__":
-    # Load data
+def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="2025-03-01", categorical=False):
     try:
-        args = parse_args()
-        print(args)
-        print(args.end_date)  
-        categorical = args.categorical
-        merged_df = merge_data(symbol=args.symbol, start_date=args.start_date, end_date=args.end_date)
+        print(f"Running sentiment analysis for {symbol} from {start_date} to {end_date}...")
+        merged_df = merge_data(symbol=symbol, start_date=start_date, end_date=end_date)
         print(merged_df.tail(2))
+
         merged_df['sentiment_score'] = get_finbert_sentiment(merged_df['headline'])
+
         if categorical:
             print("Converting Sentiment Score into Category")
             merged_df['sentiment_class'] = merged_df['headline'].apply(classify_sentiment)
-            output_dir = 'sentiment_categorical'  
-            output_file = f'merged_data_{args.symbol}_from_{args.start_date}_to_{args.end_date}.csv'  
-            os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, output_file)
-            merged_df.to_csv(output_path, index=False)
-        
+            output_dir = 'sentiment_categorical'
         else:
-            output_dir = 'sentiment'  
-            output_file = f'merged_data_{args.symbol}_from_{args.start_date}_to_{args.end_date}.csv'  
-            os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, output_file)
-            merged_df.to_csv(output_path, index=False)
-        
+            output_dir = 'sentiment'
+
+        output_file = f'merged_data_{symbol}_from_{start_date}_to_{end_date}.csv'
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, output_file)
+        merged_df.to_csv(output_path, index=False)
+        print(f"Data saved to {output_path}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
 
+if __name__ == "__main__":
+    # Load data
+    args = parse_args()
+    run_sentiment_analysis(args.symbol, args.start_date, args.end_date, args.categorical)
