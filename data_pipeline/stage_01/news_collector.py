@@ -101,8 +101,6 @@ def fix_data(df):
 
 
 def fetch_news_df(symbol, start_date, end_date = datetime.today().strftime("%Y-%m-%d")):
-    symbol = symbol
-    start_date = start_date
     df = preprocess_data(symbol, start_date,end_date)
     df = fix_data(df)
     output_dir = 'MERGED'  
