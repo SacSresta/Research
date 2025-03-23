@@ -16,8 +16,10 @@ def merge_data(symbol='AAPL', start_date='2025-01-01', end_date='2025-03-01'):
         market_df,
         news_df,
         on='Date',
-        how='inner'
+        how='left'
     )
+    print("This is a market data shape",market_df.shape)
+    print("This is a merged data", merged_df.shape)
 
     return merged_df
 
@@ -34,9 +36,7 @@ if __name__ == "__main__":
     try:
 
         args = parse_args()
-        print(args)
         merged_df = merge_data(symbol=args.symbol, start_date=args.start_date, end_date=args.end_date)
-        print(merged_df.tail(2))
         
     except Exception as e:
         print(f"An error occurred: {e}")

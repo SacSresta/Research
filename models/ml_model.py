@@ -21,7 +21,6 @@ if __name__ == "__main__":
     path = '/home/sacsresta/Documents/RESEARCH/Project/sentiment/merged_data_AAPL_from_2024-01-01_to_2025-01-01.csv'
 
     df = pd.read_csv(path)
-    print(df)
     df.Date = pd.to_datetime(df.Date)
     df = df.drop(columns = ['Ticker','headline'])
     df = SSL(data=df.copy(), period=10)
