@@ -16,35 +16,37 @@ from backtesting import Strategy
 from backtesting.lib import crossover
 from backtesting import Backtest
 
+# Add at the beginning of your script
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-def prepare_data(data, lookback=60):
-    # Create sequences from data (without scaling yet)
-    X, y = [], []
-    for i in range(lookback, len(data)):
-        # Get sequence of lookback timesteps for all features
-        X.append(data.iloc[i-lookback:i, :-1].values)
-        
-        # Target is the Close price at current timestep (not fixed index 1)
-        y.append(data.iloc[i]['shifted_direction'])
-    
 
-    
-    # Create scaler (but don't apply it yet)
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    
-    return X, y, scaler
+
 def build_lstm_model(input_shape):
     K.clear_session()
     model = Sequential()
-    # Need to specify input_shape on first layer
-    model.add(LSTM(64, return_sequences=True, input_shape=input_shape))
-    model.add(LSTM(64, return_sequences=True))
+    
+    # Stacked LSTM layers with dropout and kernel initialization
+    model.add(LSTM(128, return_sequences=True, input_shape=input_shape, 
+                   kernel_initializer='glorot_uniform', recurrent_initializer='orthogonal'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))  # Reduce overfitting
+    
+    model.add(LSTM(64, return_sequences=True, 
+                   kernel_regularizer=l2(1e-4)))  # L2 regularization
+    model.add(Dropout(0.2))
+    
     model.add(LSTM(32))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-
-
+    model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.2))
+    
+    model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(1e-4)))
+    
+    # Optimizer with learning rate tuning
+    optimizer = Adam(learning_rate=0.001)
+    model.compile(optimizer=optimizer, 
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy', 'Precision', 'Recall'])
     return model
 
 def plot_loss(history):
@@ -66,7 +68,7 @@ def plot_loss(history):
 
 def give_path(path):
     df = pd.read_csv(path)
-    df.drop(columns=['Cleaned_Headlines','Ticker'], inplace=True)
+    
     df['headline'] = df['headline'].str.replace(r'[\[\]\'\"]', '', regex=True)
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date',inplace=True)
@@ -76,6 +78,22 @@ def give_path(path):
     dl_df = df[['Close', 'High', 'Low', 'Open', 'Volume','sentiment_score','Direction','shifted_direction']]
     return dl_df
 
+def prepare_data(data, lookback=60):
+    # Create sequences from data (without scaling yet)
+    X, y = [], []
+    for i in range(lookback, len(data)):
+        # Get sequence of lookback timesteps for all features
+        X.append(data.iloc[i-lookback:i, :-2].values)
+        
+        # Target is the Close price at current timestep (not fixed index 1)
+        y.append(data.iloc[i]['shifted_direction'])
+    
+
+    
+    # Create scaler (but don't apply it yet)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    
+    return X, y, scaler
 
 def final_preprocessing(lookback,data):
     X, y, scaler = prepare_data(dl_df, lookback=lookback)
