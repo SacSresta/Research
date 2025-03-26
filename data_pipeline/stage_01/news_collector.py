@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 import json
-
+import re
 
 
 
@@ -99,21 +99,108 @@ def fix_data(df):
 
     return df_grouped
 
+def clean_alpaca_news(
+    df: pd.DataFrame, 
+    ticker: str = "AAPL",
+    custom_keywords: list = None,
+    false_positives: list = None
+) -> pd.DataFrame:
 
-def fetch_news_df(symbol, start_date, end_date = datetime.today().strftime("%Y-%m-%d")):
-    df = preprocess_data(symbol, start_date,end_date)
+    # Initialize configurations
+    ticker_keywords = [
+        ticker.lower(), 'iphone', 'ipad', 'ios', 'mac', 'apple watch',
+        'app store', 'tim cook', 'icloud', 'itunes'
+    ]
+    if custom_keywords:
+        ticker_keywords += [kw.lower() for kw in custom_keywords]
+
+    false_positives = false_positives or [
+        'pineapple', 'apple fruit', 'apple pie', 'grapple', 'big apple'
+    ]
+
+    # Preprocessing pipeline
+    def _clean_headline(text):
+        text = str(text).lower()
+        text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
+        text = re.sub(r'(\-\w+)\b', '', text)  # Remove source tags
+        text = re.sub(r'\b(says|reports|according)\b.*$', '', text)
+        return text.strip()
+    
+    processed = (
+        df.loc[df['Ticker'] == ticker]
+        .assign(headline=lambda x: x['headline'].str.split(' \| '))
+        .explode('headline')
+        .assign(cleaned=lambda x: x['headline'].apply(_clean_headline))
+        .drop_duplicates(['Ticker', 'Date', 'cleaned'])
+        .sort_values('Date')
+    )
+
+    # Relevance validation
+    pos_pattern = r'\b(' + '|'.join(ticker_keywords) + r')\b'
+    neg_pattern = r'\b(' + '|'.join(false_positives) + r')\b'
+    
+    processed['is_ticker'] = (
+        processed['cleaned']
+        .str.contains(pos_pattern, regex=True)
+        .astype(int)
+    ) & (
+        ~processed['cleaned']
+        .str.contains(neg_pattern, regex=True)
+        .astype(int)
+    )
+
+    processed = processed[processed['is_ticker'] == 1]
+
+    # Group and augment
+    grouped = processed.groupby(['Ticker', 'Date']).agg(
+        Headline_Count=('cleaned', 'count'),
+        Headlines=('headline', list),
+        Cleaned_Headlines=('cleaned', list),
+        Mentioned_Tickers=('cleaned', 
+            lambda x: list(set(re.findall(r'\b([A-Z]{2,4})\b', ' '.join(x))))
+        )
+    ).reset_index()
+
+    return grouped.assign(
+        First_Headline=lambda x: x['Headlines'].str[0],
+        Date=lambda x: pd.to_datetime(x['Date'])
+    )
+
+
+def fetch_news_df(
+    symbol, 
+    start_date, 
+    end_date=None, 
+    custom_keywords=None, 
+    false_positives=None
+):
+    if end_date is None:
+        end_date = datetime.today().strftime("%Y-%m-%d")
+    df = preprocess_data(symbol, start_date, end_date)
+
     df = fix_data(df)
+
+    df = clean_alpaca_news(
+        df, 
+        ticker=symbol,  
+        custom_keywords=custom_keywords,
+        false_positives=false_positives
+    )
+    print(df.columns)
+    df = df.drop(columns=['Mentioned_Tickers', 'First_Headline','Headline_Count', 'Headlines'])
     output_dir = 'MERGED'  
-    output_file = f'merged_data_{symbol}_from_{start_date}.csv'  
+    output_file = f'merged_data_{symbol}_from_{start_date}_to_{end_date}.csv'  
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, output_file)
     df.to_csv(output_path, index=False)
+    
     return df
 
 if __name__ == "__main__":
     symbol = "TSLA"
     start_date = '2025-01-01'
     end_date = '2025-03-01'
-    df = fetch_news_df(symbol, start_date, end_date)  # Fetch the data for the specified symbol
+    keywords = ['TSLA','tesla','elon','twitter','x']
+    df = fetch_news_df(symbol, start_date, end_date, custom_keywords=keywords)  
     print(df.head(10))
     

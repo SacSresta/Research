@@ -31,7 +31,8 @@ def parse_args():
     parser.add_argument('--start_date', type=str, default='2025-01-01', help="Start date in 'YYYY-MM-DD' format")
     parser.add_argument('--end_date', type=str, default='2025-03-01', help="End date in 'YYYY-MM-DD' format")
     parser.add_argument('--categorical', type=bool, default=False, help="If required class or pos/neg/neutral")
-    
+    parser.add_argument('--custom_keywords', type=str, nargs='+', help="List of custom keywords for filtering news")
+    parser.add_argument('--false_positives', type=str, nargs='+', help="List of false positive keywords to exclude")
     return parser.parse_args()
 
 
@@ -49,10 +50,10 @@ def classify_sentiment(text):
     predicted_class = sentiment_labels[torch.argmax(probs).item()]
     return predicted_class
 
-def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="2025-03-01", categorical=False):
+def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="2025-03-01", categorical=False,custom_keywords=None,false_positives=None):
     try:
         print(f"Running sentiment analysis for {symbol} from {start_date} to {end_date}...")
-        merged_df = merge_data(symbol=symbol, start_date=start_date, end_date=end_date)
+        merged_df = merge_data(symbol=symbol, start_date=start_date, end_date=end_date,custom_keywords=custom_keywords, false_positives=false_positives)
         print(merged_df.tail(2))
 
         merged_df['sentiment_score'] = get_finbert_sentiment(merged_df['headline'])
@@ -77,4 +78,6 @@ def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="202
 if __name__ == "__main__":
     # Load data
     args = parse_args()
-    run_sentiment_analysis(args.symbol, args.start_date, args.end_date, args.categorical)
+    custom_keywords = args.custom_keywords if args.custom_keywords else None
+    false_positives = args.false_positives if args.false_positives else None
+    run_sentiment_analysis(args.symbol, args.start_date, args.end_date, args.categorical,custom_keywords=custom_keywords, false_positives=false_positives)
