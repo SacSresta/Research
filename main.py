@@ -4,6 +4,7 @@ from sklearn.metrics import confusion_matrix,accuracy_score,classification_repor
 import numpy as np
 import pandas as pd
 
+
 def run(lookback,path, ticker,epochs):
     df = give_path(path)
     X, y, scaler = prepare_data(df, lookback=lookback)
@@ -57,14 +58,14 @@ if __name__ == "__main__":
             ticker = path.split('_')[2]
             print("*******************************8")
             print(f"Processing for {ticker}")
-            comparison = run(path=path, lookback=20, ticker=ticker,epochs = 20)
+            comparison = run(path=path, lookback=50, ticker=ticker,epochs = 20)
             print(type(comparison))
 
         summary.append(comparison)
 
     summary_df = pd.concat(summary, axis=1, join="outer")
     print(summary_df)
-    summary_df.to_csv("summary.csv", index=False)  # Save as CSV
+    summary_df.to_csv("summary.csv", index=True)  # Save as CSV
 
         
         

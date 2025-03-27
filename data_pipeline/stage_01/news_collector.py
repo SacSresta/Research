@@ -202,5 +202,6 @@ if __name__ == "__main__":
     end_date = '2025-03-01'
     keywords = ['TSLA','tesla','elon','twitter','x']
     df = fetch_news_df(symbol, start_date, end_date, custom_keywords=keywords)  
+    
     print(df.head(10))
     
