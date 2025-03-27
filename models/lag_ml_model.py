@@ -190,6 +190,7 @@ def scaling_function(X_train, X_test):
 def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
     # Create list to store results
     results = []
+    y_pred_dict = {}
 
     # Train-test loop
     for name, clf in classifiers.items():
@@ -213,8 +214,9 @@ def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
         print("Confusion Matrix:")
         print(cm)
         print(report)
+        y_pred_dict[name] = y_pred
     df = pd.DataFrame(results,columns=['Model', 'Accuracy', 'Confusion Matrix'])
-    return df
+    return df,y_pred_dict  
 
 def main():
     df = get_data(path=None)
@@ -233,7 +235,7 @@ def main():
     param_grids = get_param_grids()
     print("Working on optimizing with GridSearchCV")
     best_models = grid_optimize_model(classifier,X_train_scaled, y_train,param_grids=param_grids)
-    results = train_model(classifiers=best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    results,y_pred_dict = train_model(classifiers=best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
     print(results)
 
     results.to_csv('model_summary_grid_opt.csv', mode='w',
