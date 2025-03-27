@@ -1,6 +1,6 @@
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, GRU
 import matplotlib.pyplot as plt
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
@@ -20,6 +20,33 @@ from backtesting import Backtest
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
+
+def build_gru_model(input_shape):
+    K.clear_session()
+    model = Sequential()
+    
+    # Stacked LSTM layers with dropout and kernel initialization
+    model.add(GRU(128, return_sequences=True, input_shape=input_shape, 
+                   kernel_initializer='glorot_uniform', recurrent_initializer='orthogonal'))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.3))  # Reduce overfitting
+    
+    model.add(GRU(64, return_sequences=True, 
+                   kernel_regularizer=l2(1e-4)))  # L2 regularization
+    model.add(Dropout(0.2))
+    
+    model.add(GRU(32))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.2))
+    
+    model.add(Dense(1, activation='sigmoid', kernel_regularizer=l2(1e-4)))
+    
+    # Optimizer with learning rate tuning
+    optimizer = Adam(learning_rate=0.001)
+    model.compile(optimizer=optimizer, 
+                  loss='binary_crossentropy', 
+                  metrics=['accuracy', 'Precision', 'Recall'])
+    return model
 
 
 def build_lstm_model(input_shape):
@@ -68,7 +95,6 @@ def plot_loss(history):
 
 def give_path(path):
     df = pd.read_csv(path)
-    
     df['headline'] = df['headline'].str.replace(r'[\[\]\'\"]', '', regex=True)
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date',inplace=True)
