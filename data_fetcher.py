@@ -3,26 +3,69 @@ from data_pipeline.stage_03_score.score import run_sentiment_analysis
 
 ticker_configs = {
     "AAPL": {
-        "custom_keywords": ["iPhone", "Mac", "iPad", "Apple Watch", "iOS"],
-        "false_positives": ["fruit", "tree"]
+        "custom_keywords": [
+            "Apple Inc.", "iPhone", "MacBook", "iPad", "Apple Watch", "iOS",
+            "Tim Cook", "App Store", "MacOS", "M1 Chip", "Apple Car", "Apple Pay",
+            "Earnings", "Revenue", "Stock Split", "Supply Chain", "Foxconn", "China"
+        ],
+        "false_positives": ["fruit", "tree", "apple orchard"]
     },
     "MSFT": {
-        "custom_keywords": ["Windows", "Azure", "Xbox", "Office 365", "LinkedIn"],
+        "custom_keywords": [
+            "Microsoft", "Windows", "Azure", "Xbox", "Office 365", "LinkedIn",
+            "Satya Nadella", "GitHub", "AI Copilot", "Bing AI", "Surface", 
+            "Cloud Computing", "Enterprise Software", "Earnings", "Stock Buyback"
+        ],
         "false_positives": ["microscope", "soft surface"]
     },
     "AMZN": {
-        "custom_keywords": ["AWS", "Prime", "Alexa", "Kindle", "e-commerce"],
-        "false_positives": ["rainforest", "river"]
+        "custom_keywords": [
+            "Amazon", "AWS", "Amazon Prime", "Jeff Bezos", "Kindle", "E-commerce",
+            "Fulfillment Center", "Whole Foods", "Alexa", "Cloud Revenue",
+            "Retail Sales", "Earnings", "Stock Split", "Logistics", "Supply Chain"
+        ],
+        "false_positives": ["rainforest", "river", "Amazon forest"]
     },
     "NVDA": {
-        "custom_keywords": ["GPU", "CUDA", "AI chips", "Hopper", "DLSS"],
-        "false_positives": ["video cards", "video editing"]
+        "custom_keywords": [
+            "NVIDIA", "GPU", "AI Chips", "CUDA", "Hopper", "DLSS", "RTX", "GeForce",
+            "Jensen Huang", "Data Center", "Semiconductor", "Artificial Intelligence",
+            "Earnings", "Chip Shortage", "Stock Buyback", "Revenue Growth"
+        ],
+        "false_positives": ["video cards", "video editing", "gaming accessories"]
     },
     "TSLA": {
-        "custom_keywords": ["Model 3", "Cybertruck", "Gigafactory", "Autopilot"],
-        "false_positives": ["Nikola Tesla", "physics"]
+        "custom_keywords": [
+            "Tesla", "Elon Musk", "Model 3", "Model S", "Cybertruck", "Gigafactory",
+            "Autopilot", "EV Market", "Tesla Energy", "Battery Production",
+            "Self-Driving", "Earnings", "Stock Split", "EV Sales", "China Expansion"
+        ],
+        "false_positives": ["Nikola Tesla", "physics", "Tesla coil"]
     },
-   
+    "GOOGL": {
+        "custom_keywords": [
+            "Alphabet", "Google", "Sundar Pichai", "YouTube", "Cloud Revenue",
+            "Search Ads", "Android", "Waymo", "AI", "DeepMind", "Google Pixel",
+            "Earnings", "Stock Buyback", "Antitrust", "Regulation"
+        ],
+        "false_positives": ["googly eyes", "alphabet letters"]
+    },
+    "META": {
+        "custom_keywords": [
+            "Meta", "Facebook", "Instagram", "WhatsApp", "Mark Zuckerberg",
+            "Reels", "Metaverse", "VR", "Oculus", "AI", "Advertising Revenue",
+            "Earnings", "Stock Buyback", "User Growth", "Ad Revenue"
+        ],
+        "false_positives": ["metadata", "metaphor"]
+    },
+    "NFLX": {
+        "custom_keywords": [
+            "Netflix", "Streaming", "OTT", "Reed Hastings", "Original Content",
+            "Subscriber Growth", "Earnings", "Ad-Supported Tier", "Licensing Deals",
+            "Content Budget", "Stock Buyback", "Revenue Growth"
+        ],
+        "false_positives": ["internet speed", "cable TV"]
+    }
 }
 
 
@@ -45,8 +88,8 @@ def process_tickers():
                 start_date=start_date,
                 end_date=end_date,
                 categorical=False,
-                custom_keywords=config["custom_keywords"],
-                false_positives=config["false_positives"]
+                custom_keywords=None,
+                false_positives=None
             )
             
             elapsed = time.time() - start_time

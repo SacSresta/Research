@@ -58,7 +58,7 @@ if __name__ == "__main__":
             ticker = path.split('_')[2]
             print("*******************************8")
             print(f"Processing for {ticker}")
-            comparison = run(path=path, lookback=50, ticker=ticker,epochs = 20)
+            comparison = run(path=path, lookback=50, ticker=ticker,epochs = 10)
             print(type(comparison))
 
         summary.append(comparison)

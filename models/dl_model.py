@@ -95,6 +95,7 @@ def plot_loss(history):
 
 def give_path(path):
     df = pd.read_csv(path)
+    df['sentiment_score'] = np.where((df['headline'] == "No headline available"),0.0,df['sentiment_score'])
     df['headline'] = df['headline'].str.replace(r'[\[\]\'\"]', '', regex=True)
     df['Date'] = pd.to_datetime(df['Date'])
     df.set_index('Date',inplace=True)
@@ -109,7 +110,7 @@ def prepare_data(data, lookback=60):
     X, y = [], []
     for i in range(lookback, len(data)):
         # Get sequence of lookback timesteps for all features
-        X.append(data.iloc[i-lookback:i, :-2].values)
+        X.append(data.iloc[i-lookback:i, :-1].values)
         
         # Target is the Close price at current timestep (not fixed index 1)
         y.append(data.iloc[i]['shifted_direction'])
