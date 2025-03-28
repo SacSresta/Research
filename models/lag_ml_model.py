@@ -162,8 +162,8 @@ def create_data(X, max_lag = 60):
   X = X.drop(columns = ['shifted_direction']).iloc[max_lag:]
   return X,y
 
-def get_data(path:None):
-    df = pd.read_csv(r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv')
+def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv'):
+    df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
     df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
         'Downtrend', 'headline','Adj Close'])
@@ -219,7 +219,7 @@ def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
     return df,y_pred_dict  
 
 def main():
-    df = get_data(path=None)
+    df = get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv')
     X_train,X_test,y_train,y_test = preprocess_data(df)
     print(X_train)
     X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
