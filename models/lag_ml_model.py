@@ -15,6 +15,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import RandomizedSearchCV
+import pickle
+import joblib
+import os
 
 def classifier_models():
     # Updated classifier dictionary
@@ -159,8 +162,8 @@ def create_data(X, max_lag = 60):
   X = X.drop(columns = ['shifted_direction']).iloc[max_lag:]
   return X,y
 
-def get_data(path:None):
-    df = pd.read_csv('/home/sacsresta/Documents/RESEARCH/Project/sentiment/merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv')
+def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv'):
+    df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
     df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
         'Downtrend', 'headline','Adj Close'])
@@ -184,17 +187,72 @@ def scaling_function(X_train, X_test):
     X_test_scaled = scaler.transform(X_test)
     return X_train_scaled,X_test_scaled
 
+def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
+    # Create list to store results
+    results = []
+    y_pred_dict = {}
+
+    # Train-test loop
+    for name, clf in classifiers.items():
+        # Train model
+        clf.fit(X_train_scaled, y_train)
+
+        # Make predictions
+        y_pred = clf.predict(X_test_scaled)
+
+        # Calculate metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred)
+
+        # Store results
+        results.append((name, accuracy, cm))
+
+        # Display results
+        print(f"\n{name} Performance:")
+        print(f"Accuracy: {accuracy:.4f}")
+        print("Confusion Matrix:")
+        print(cm)
+        print(report)
+        y_pred_dict[name] = y_pred
+    df = pd.DataFrame(results,columns=['Model', 'Accuracy', 'Confusion Matrix'])
+    return df,y_pred_dict  
+
 def main():
-    df = get_data(path=None)
+    df = get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv')
     X_train,X_test,y_train,y_test = preprocess_data(df)
     print(X_train)
     X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
     print(X_train_scaled.shape,X_test_scaled.shape,y_train.shape,y_test.shape)
     classifier = classifier_models()
+    os.makedirs('saved_models', exist_ok=True)
+    results = train_model(classifiers=classifier, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+    results.to_csv('model_summary_no_opt.csv', mode='w',
+               index=True)
+    best_base = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(classifier[best_base], f"saved_models/best_base_{best_base.replace(' ', '_')}.pkl")
     param_grids = get_param_grids()
+    print("Working on optimizing with GridSearchCV")
     best_models = grid_optimize_model(classifier,X_train_scaled, y_train,param_grids=param_grids)
-    print(best_models.keys())
+    results,y_pred_dict = train_model(classifiers=best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+
+    results.to_csv('model_summary_grid_opt.csv', mode='w',
+               index=True)
+    best_grid = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(best_models[best_grid], f"saved_models/best_grid_{best_grid.replace(' ', '_')}.pkl")
+    print('-----------------------------')  
+    print("Working on optimizing with RandomSearchCV")
     random_best_models = random_optimize_model(classifier,X_train_scaled, y_train,param_grids=param_grids)
+    results = train_model(classifiers=random_best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+    results.to_csv('model_summary_rand_opt.csv', mode='w',
+               index=True)
+    best_random = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(random_best_models[best_random], f"saved_models/best_random_{best_random.replace(' ', '_')}.pkl")
+    print('--------------------------')
+
 
 
 
