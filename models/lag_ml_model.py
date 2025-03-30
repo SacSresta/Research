@@ -171,10 +171,10 @@ def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_
     df.dropna(inplace=True)
     return df
 
-def preprocess_data(df):
+def preprocess_data(df,max_lag=60):
     X = df[['Date', 'Close', 'High', 'Low', 'Open', 'Volume', 
         'sentiment_score', 'shifted_direction']].copy()
-    X,y = create_data(X)
+    X,y = create_data(X, max_lag=max_lag)
     encoder = LabelEncoder()
     y = encoder.fit_transform(y)
     X.set_index('Date',inplace=True)
