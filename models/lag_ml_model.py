@@ -18,6 +18,7 @@ from sklearn.model_selection import RandomizedSearchCV
 import pickle
 import joblib
 import os
+from data_pipeline.stage_01.historical_data import add_technical_indicators
 
 def classifier_models():
     # Updated classifier dictionary
@@ -149,32 +150,33 @@ def random_optimize_model(classifiers, X_train_scaled, y_train,param_grids):
     return best_models
 
 
-def create_data(X, max_lag = 60):
+def create_data(data, max_lag = 60):
   # Define the number of lags you want
   max_lag = max_lag  # For example, to create lags 1 through 5
 
   # Create lagged features in a loop
   for i in range(1, max_lag + 1):
-      X[f'Close_lag{i}'] = X['Close'].shift(i)
+      data[f'Close_lag{i}'] = data['Close'].shift(i)
 
   # Define X and y (drop the first two rows with NaN lags)
-  y = X['shifted_direction'].iloc[max_lag:].astype(int)
-  X = X.drop(columns = ['shifted_direction']).iloc[max_lag:]
+  y = data['shifted_direction'].iloc[max_lag:].astype(int)
+  X = data.drop(columns = ['shifted_direction']).iloc[max_lag:]
   return X,y
 
-def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv'):
+def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv', ind = False):
     df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
     df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
-        'Downtrend', 'headline','Adj Close'])
+        'Downtrend', 'headline','Adj Close','Direction'])
     df['Date'] = pd.to_datetime(df['Date'])
+    if ind:
+        df = add_technical_indicators(df)
     df.dropna(inplace=True)
     return df
 
 def preprocess_data(df,max_lag=60):
-    X = df[['Date', 'Close', 'High', 'Low', 'Open', 'Volume', 
-        'sentiment_score', 'shifted_direction']].copy()
-    X,y = create_data(X, max_lag=max_lag)
+    data = df.copy()
+    X,y = create_data(data, max_lag=max_lag)
     encoder = LabelEncoder()
     y = encoder.fit_transform(y)
     X.set_index('Date',inplace=True)

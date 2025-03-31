@@ -1,8 +1,37 @@
 import yfinance as yf
 import pandas as pd
-
-import pandas as pd
 import numpy as np
+np.NaN = np.nan
+import pandas_ta as ta
+
+def add_technical_indicators(df):
+    """Add common technical indicators to a DataFrame using pandas_ta"""
+    
+    # Set Date as index (required for time-based calculations)
+    if 'Date' in df.columns:
+        df = df.set_index('Date')
+
+    # Momentum Indicators
+    df.ta.rsi(length=14, close='Close', append=True)  
+    df.ta.macd(fast=12, slow=26, signal=9, close='Close', append=True) 
+
+    # Trend Indicators
+    df.ta.adx(length=14, high='High', low='Low', close='Close', append=True)  
+    df.ta.ema(length=20, close='Close', append=True) 
+
+    # Volatility Indicators
+    df.ta.bbands(length=20, std=2, close='Close', append=True) 
+
+    # Volume Indicators
+    df.ta.obv(close='Close', volume='Volume', append=True)  
+
+    # Oscillators
+    df.ta.stoch(high='High', low='Low', close='Close', append=True)  
+
+    # Optional: Cleanup intermediate columns
+    df.drop(columns=['BBM_20_2.0'], errors='ignore', inplace=True) 
+    
+    return df.reset_index()  
 
 def supertrend(df, factor=3, atr_period=10):
     # Calculate ATR
