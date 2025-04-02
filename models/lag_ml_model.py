@@ -42,6 +42,7 @@ def classifier_models():
         max_depth=5, 
         boosting_type='gbdt'
     )
+    
     }
     return classifiers
 

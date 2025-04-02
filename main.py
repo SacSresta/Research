@@ -101,10 +101,9 @@ if __name__ == "__main__":
             random_merge = pd.merge(results,random_df, how='inner')
             random_merge.to_csv(os.path.join(saving_dir,f'{ticker}_random_returns_accuracy.csv'))
             print("Randomization Completed")
-            saving_dir = os.path.join(dir, f'{saving_path}/combined')
-            os.makedirs(saving_dir,exist_ok=True)
-            actual_return = backtest(y_test,X_test)
-            combined_df = pd.concat([normal_merge,grid_merge,random_merge,actual_return], axis=0, keys=['normal','grid','random','actual'])
+            actual,_ = backtest(y_test,X_test)
+            actual['Model'] = 'Actual'
+            combined_df = pd.concat([normal_merge,grid_merge,random_merge,actual], axis=0, keys=['normal','grid','random','actual'])
             combined_df.to_csv(os.path.join(saving_dir,f'{ticker}_combined_returns_accuracy.csv'))
 
 
