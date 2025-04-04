@@ -61,18 +61,19 @@ def random_model(X_train_scaled,X_test_scaled,y_train,y_test):
     return results,y_pred_dict
 
 
-
-
-if __name__ == "__main__":
+def run(lag=60):
     dir = r'C:\Users\sachi\Documents\Researchcode\sentiment'
-    saving_path = 'strategy_name'
+
+    combined_collector = []
     for filepath in os.listdir(dir):
         path = os.path.join(dir,filepath)
         if filepath.endswith('.csv'):
             print(f"Working on {filepath}")
+            saving_path = f'strategy_{lag}'
             ticker = filepath.split('_')[2]
+            print(f"Loading Data for {ticker}, testing on number of lag {lag}, saving path is {saving_path}")
             df = get_data(path,ind=True)
-            X_train,X_test,y_train,y_test = preprocess_data(df,max_lag=60)
+            X_train,X_test,y_train,y_test = preprocess_data(df,max_lag=lag)
             X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
             #No Optimation Model
             results,y_pred_dict = normal_model(X_train_scaled,X_test_scaled,y_train,y_test)
@@ -103,8 +104,43 @@ if __name__ == "__main__":
             print("Randomization Completed")
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
+            actual = pd.DataFrame(actual).T
+            saving_dir = os.path.join(dir, f'{saving_path}/combined')
+            os.makedirs(saving_dir,exist_ok=True)
+            print("Saving Backtesting Result")
             combined_df = pd.concat([normal_merge,grid_merge,random_merge,actual], axis=0, keys=['normal','grid','random','actual'])
             combined_df.to_csv(os.path.join(saving_dir,f'{ticker}_combined_returns_accuracy.csv'))
+            combined_collector.append(combined_df)
+    
+    return combined_collector,ticker
+
+
+    
+
+
+
+if __name__ == "__main__":
+    all_dfs = []  # Create a list to store all DataFrames
+    for lag in range(5,6):
+        combined_collector, ticker = run(lag)
+        
+        # Add ticker and lag information to each DataFrame
+        for df in combined_collector:
+            df['ticker'] = ticker
+            df['lag'] = lag
+        
+        # Concatenate DataFrames for this iteration
+        iteration_df = pd.concat(combined_collector, axis=0)
+        all_dfs.append(iteration_df)
+        
+        # Save individual lag files
+        iteration_df.to_csv(f'combined_df_{lag}.csv')
+        break
+    
+    # Create one final combined DataFrame with all data
+    final_df = pd.concat(all_dfs, axis=0)
+    final_df.to_csv(f'master_combined_df_{ticker}.csv')
+    
 
 
 
