@@ -164,7 +164,7 @@ def create_data(data, max_lag = 60):
   X = data.drop(columns = ['shifted_direction']).iloc[max_lag:]
   return X,y
 
-def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv', ind = False):
+def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_SPY_from_2015-01-01_to_2025-03-01.csv', ind = False):
     df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
     df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',

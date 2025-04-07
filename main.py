@@ -20,7 +20,54 @@ def backtest(y_pred, X_test):
     stats = bt.run()
     return stats,bt
 
+def risk_backtest(y_pred, X_test, risk=0.20):
+    def get_signal():
+        return y_pred
 
+    class MyStrategy(Strategy):
+        # Risk settings:
+        RISK_PER_TRADE = 1  # This will now be the percentage of equity to invest
+        STOP_LOSS_PCT = risk  # 20% stop-loss from entry price
+
+        def init(self):
+            self.signal = self.I(get_signal)
+
+        def next(self):
+            price = self.data.Close[-1]
+            current_equity = self.equity
+            
+            if self.signal[-1] == 1:
+                if not self.position:
+                    # Calculate shares based on risk percentage of total equity
+                    investment_amount = current_equity * self.RISK_PER_TRADE
+                    shares = int(investment_amount / price)
+                    stop_loss = price * (1 - self.STOP_LOSS_PCT)
+
+                    # Place a buy order with a protective stop-loss at 20% below entry
+                    self.buy(size=shares, sl=stop_loss)
+            else:
+                # If signal == 0 and we have an open position, close it
+                if self.position:
+                    self.position.close()
+
+    bt = Backtest(X_test, MyStrategy, cash=10000)
+    stats = bt.run()
+    return stats, bt
+
+
+def risk_backtest_loop(y_pred_dict,X_test,risk = 0.20):
+    stats_l=[]
+    bt_collection = {}
+    for name,y_pred in y_pred_dict.items():
+        print(f"Backtesting for {name}")
+        stats,bt = risk_backtest(y_pred,X_test,risk = risk)
+        bt_collection[name] = bt
+        stats['Model'] = name
+        stats_l.append(stats)
+
+    normal_df = pd.DataFrame(stats_l)
+
+    return normal_df,bt_collection
 def backtest_loop(y_pred_dict,X_test):
     stats_l=[]
     bt_collection = {}
