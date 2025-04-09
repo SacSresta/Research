@@ -125,6 +125,7 @@ def normal_run(lag=60):
             #No Optimation Model
             results,y_pred_dict = normal_model(X_train_scaled,X_test_scaled,y_train,y_test)
             normal_df,bt_collection = backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -133,6 +134,9 @@ def normal_run(lag=60):
             print("Saving Backtesting Result")
             normal_merge = pd.merge(results,normal_df, how='inner')
             normal_merge = pd.concat([normal_merge,actual],axis=0)
+            risk_merge = pd.merge(results,risk_df, how='inner')
+            risk_merge = pd.concat([risk_merge,actual],axis=0)
+            normal_merge = pd.merge(normal_merge,risk_merge, on='Model')
             normal_merge.to_csv(os.path.join(saving_dir, f'{ticker}_normal_returns_accuracy.csv'))
             print("Normal Results and Returns Saved")
             combined_collector[ticker] = normal_merge
@@ -152,10 +156,10 @@ def grid_run(lag=60):
             df = get_data(path,ind=True)
             X_train,X_test,y_train,y_test = preprocess_data(df,max_lag=lag)
             X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
-            #No Optimation Model
             #GridSearchCV
             results,y_pred_dict = grid_model(X_train_scaled,X_test_scaled,y_train,y_test)
             grid_df,bt_collection = backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -164,6 +168,9 @@ def grid_run(lag=60):
             print("Saving Backtesting Result")
             grid_merge = pd.merge(results,grid_df, how='inner')
             grid_merge = pd.concat([grid_merge,actual],axis=0)
+            risk_merge = pd.merge(results,risk_df, how='inner')
+            risk_merge = pd.concat([risk_merge,actual],axis=0)
+            grid_merge = pd.merge(grid_merge,risk_merge, on='Model')
             grid_merge.to_csv(os.path.join(saving_dir, f'{ticker}_grid_returns_accuracy.csv'))
             print("Grid Optimization Completed")
             print("Normal Results and Returns Saved")
@@ -186,6 +193,7 @@ def random_run(lag=60):
             X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
             results,y_pred_dict = random_model(X_train_scaled,X_test_scaled,y_train,y_test)
             random_df,bt_collection= backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -194,6 +202,9 @@ def random_run(lag=60):
             print("Saving Backtesting Result")
             random_merge = pd.merge(results,random_df, how='inner')
             random_merge = pd.concat([random_merge,actual],axis=0)
+            risk_merge = pd.merge(results,risk_df, how='inner')
+            risk_merge = pd.concat([risk_merge,actual],axis=0)
+            random_merge = pd.merge(random_merge,risk_merge, on='Model')
             random_merge.to_csv(os.path.join(saving_dir,f'{ticker}_random_returns_accuracy.csv'))
             print("Normal Results and Returns Saved")
 
@@ -261,19 +272,22 @@ def run(lag=60):
 
 
 if __name__ == "__main__":
-    for lag in range(5,65,5):
+
+    output_dir = os.path.join(os.getcwd(), 'master_combined_risk')
+    os.makedirs(output_dir, exist_ok=True)
+
+    for lag in range(0,60,5):
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
-        df.to_csv(f'master_combined_df_{lag}_normal.csv')
-        
+        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal.csv'))
+
         combined_collector, ticker = grid_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
-        df.to_csv(f'master_combined_df_{lag}_grid.csv')
+        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_grid.csv'))
         
         combined_collector, ticker = random_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
-        df.to_csv(f'master_combined_df_{lag}_random.csv')
-        
+        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random.csv'))        
 
 
 
