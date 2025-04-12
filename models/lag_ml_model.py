@@ -60,7 +60,6 @@ def get_param_grids():
             'min_samples_split': [2, 10],
             'max_features': ['sqrt', 'log2']
         },
-
         'SVM': {
             'C': [0.1, 1, 10],
             'kernel': ['linear', 'rbf'],
@@ -103,9 +102,22 @@ def get_param_grids():
             'solver': ['adam', 'sgd'],
             'learning_rate_init': [0.001, 0.01],
             'alpha': [0.0001, 0.001]
+        },
+        'XGBoost': {
+            'n_estimators': [100, 200],
+            'max_depth': [3, 6, 9],
+            'learning_rate': [0.01, 0.1, 0.3],
+            'subsample': [0.8, 1.0],
+            'colsample_bytree': [0.8, 1.0],
+            'min_child_weight': [1, 3],
+            'gamma': [0, 0.1],
+            'reg_alpha': [0, 0.1, 1.0],
+            'reg_lambda': [0, 1.0],
+            'scale_pos_weight': [1]
         }
     }
     return param_grids
+
 
 def grid_optimize_model(classifiers,X_train_scaled, y_train,param_grids):
 
@@ -183,6 +195,29 @@ def preprocess_data(df,max_lag=60):
     X.set_index('Date',inplace=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle = False)
     return X_train,X_test,y_train,y_test
+
+def preprocess_data_by_date(df, max_lag=60, test_start_date='2023-01-01'):
+    data = df.copy()
+    
+    # Create lag features and target
+    X, y = create_data(data, max_lag=max_lag)
+    encoder = LabelEncoder()
+    y = encoder.fit_transform(y)
+
+    # Ensure 'Date' is datetime and set as index
+    X['Date'] = pd.to_datetime(X['Date'])
+    X.set_index('Date', inplace=True)
+
+    # Split based on date
+    X_train = X[X.index < test_start_date]
+    X_test = X[X.index >= test_start_date]
+    y_train = y[:len(X_train)]
+    y_test = y[len(X_train):]
+    print(X_test.index[0])
+    print(X_test.shape)
+
+    return X_train, X_test, y_train, y_test
+
 
 def scaling_function(X_train, X_test):
     scaler = StandardScaler()

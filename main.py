@@ -276,7 +276,7 @@ if __name__ == "__main__":
     output_dir = os.path.join(os.getcwd(), 'master_combined_risk')
     os.makedirs(output_dir, exist_ok=True)
 
-    for lag in range(3,5,0):
+    for lag in range(0,65,5):
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal.csv'))
