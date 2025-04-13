@@ -9,36 +9,28 @@ import re
 
 
 
-def get_historical_data(start_date = '2020-01-01', symbol='AAPL',end_date = datetime.today().strftime("%Y-%m-%d")):
-
+def get_historical_data(start_date='2020-01-01', symbol='AAPL', end_date=datetime.today().strftime("%Y-%m-%d")):
     def time_converter(time_str):
         """ Convert ISO 8601 timestamp to YYYY-MM-DD format. """
-        # Handle 'Z' timezone indicator by replacing it with +00:00
         if time_str.endswith('Z'):
             time_str = time_str[:-1] + '+00:00'
-        
         try:
-            # Try to parse with fromisoformat
             timestamp_obj = datetime.fromisoformat(time_str)
         except ValueError:
-            # Alternative parsing if fromisoformat fails
             timestamp_obj = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S.%f%z")
-        
         return timestamp_obj.strftime('%Y-%m-%d')
 
-    start_date = start_date
-
     json_collector = []
+
     while True:
-        end_date = end_date
-        
-        # Stop condition to prevent infinite loop
         if start_date >= end_date:
             print("Reached the latest date. Stopping loop.")
             break
 
-        symbol = symbol
-        url = f"https://data.alpaca.markets/v1beta1/news?start={start_date}&sort=asc&symbols={symbol}&limit=50"
+        # Adjust symbol if META and date is before 2021-10-28
+        query_symbol = 'FB' if symbol == 'META' and start_date < '2021-10-28' else symbol
+
+        url = f"https://data.alpaca.markets/v1beta1/news?start={start_date}&sort=asc&symbols={query_symbol}&limit=50"
 
         headers = {
             "accept": "application/json",
@@ -47,34 +39,28 @@ def get_historical_data(start_date = '2020-01-01', symbol='AAPL',end_date = date
         }
 
         response = requests.get(url, headers=headers)
-        
-        # Check if the response contains valid JSON data
+
         if response.status_code != 200:
             print("Error fetching data:", response.status_code)
             break
-        
+
         data = response.json()
-        
-        # If no more news is returned, break the loop
+
         if 'news' not in data or not data['news']:
             print("No more news data available. Stopping loop.")
             break
-        
+
         json_collector.extend(data['news'])
-        
-        # Extract last updated date from the latest fetched news
+
         last_news_time = data['news'][-1]['updated_at']
         new_start_date = time_converter(last_news_time)
 
-        # Update the start_date more efficiently
         if new_start_date != start_date:
             start_date = new_start_date
-            print(f"Same date as previous batch: {start_date}")
         else:
-            # Add one day to the start date to avoid duplication
             new_start_date_dt = datetime.strptime(new_start_date, "%Y-%m-%d") + timedelta(days=1)
             start_date = new_start_date_dt.strftime("%Y-%m-%d")
-        
+
         print("Fetching next batch starting from:", start_date)
 
     return json_collector
@@ -180,14 +166,6 @@ def fetch_news_df(
 
     df = fix_data(df)
 
-    df = clean_alpaca_news(
-        df, 
-        ticker=symbol,  
-        custom_keywords=custom_keywords,
-        false_positives=false_positives
-    )
-    print(df.columns)
-    df = df.drop(columns=['Mentioned_Tickers', 'First_Headline','Headline_Count', 'Headlines'])
     output_dir = 'MERGED'  
     output_file = f'merged_data_{symbol}_from_{start_date}_to_{end_date}.csv'  
     os.makedirs(output_dir, exist_ok=True)

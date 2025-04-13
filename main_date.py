@@ -109,11 +109,12 @@ def random_model(X_train_scaled,X_test_scaled,y_train,y_test):
 
 
 def normal_run(lag=60):
-    dir = r'C:\Users\sachi\Documents\Researchcode\sentiment'
+    dir = r'C:\Users\sachi\Documents\Researchcode\Conferance_Data'
 
     combined_collector = {}
     for filepath in os.listdir(dir):
         path = os.path.join(dir,filepath)
+        print(path)
         if filepath.endswith('.csv'):
             print(f"Working on {filepath}")
             saving_path = f'strategy_{lag}'
@@ -143,7 +144,7 @@ def normal_run(lag=60):
 
     return combined_collector,ticker
 def grid_run(lag=60):
-    dir = r'C:\Users\sachi\Documents\Researchcode\sentiment'
+    dir = r'C:\Users\sachi\Documents\Researchcode\Conferance_Data'
 
     combined_collector = {}
     for filepath in os.listdir(dir):
@@ -178,7 +179,7 @@ def grid_run(lag=60):
 
     return combined_collector,ticker
 def random_run(lag=60):
-    dir = r'C:\Users\sachi\Documents\Researchcode\sentiment'
+    dir = r'C:\Users\sachi\Documents\Researchcode\Conferance_Data'
 
     combined_collector = {}
     for filepath in os.listdir(dir):

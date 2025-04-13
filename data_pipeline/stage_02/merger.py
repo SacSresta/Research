@@ -19,9 +19,9 @@ def merge_data(symbol='AAPL', start_date='2025-01-01', end_date='2025-03-01',cus
         how='left'
     )
 
-    merged_df['headline'] = merged_df['Cleaned_Headlines'].fillna("No headline available")
+    merged_df['headline'] = merged_df['headline'].fillna("No headline available")
     print(merged_df.headline.isnull().sum())
-    merged_df.drop(columns=['Cleaned_Headlines','Ticker'], inplace=True)
+    #merged_df.drop(columns=['Cleaned_Headlines','Ticker'], inplace=True)
     print("This is a market data shape",market_df.shape)
     print("This is a merged data", merged_df.shape)
 

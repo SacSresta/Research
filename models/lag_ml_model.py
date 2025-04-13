@@ -180,7 +180,7 @@ def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_
     df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
     df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
-        'Downtrend', 'headline','Adj Close','Direction'])
+        'Downtrend', 'headline','Adj Close','Direction','Ticker'])
     df['Date'] = pd.to_datetime(df['Date'])
     if ind:
         df = add_technical_indicators(df)
@@ -196,7 +196,7 @@ def preprocess_data(df,max_lag=60):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle = False)
     return X_train,X_test,y_train,y_test
 
-def preprocess_data_by_date(df, max_lag=60, test_start_date='2023-01-01'):
+def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
     data = df.copy()
     
     # Create lag features and target

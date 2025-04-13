@@ -50,7 +50,7 @@ def classify_sentiment(text):
     predicted_class = sentiment_labels[torch.argmax(probs).item()]
     return predicted_class
 
-def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="2025-03-01", categorical=False,custom_keywords=None,false_positives=None):
+def run_sentiment_analysis(symbol="AAPL", start_date="2015-01-01", end_date="2025-03-01", categorical=False,custom_keywords=None,false_positives=None):
     try:
         print(f"Running sentiment analysis for {symbol} from {start_date} to {end_date}...")
         merged_df = merge_data(symbol=symbol, start_date=start_date, end_date=end_date,custom_keywords=custom_keywords, false_positives=false_positives)
@@ -63,7 +63,7 @@ def run_sentiment_analysis(symbol="AAPL", start_date="2025-01-01", end_date="202
             merged_df['sentiment_class'] = merged_df['headline'].apply(classify_sentiment)
             output_dir = 'sentiment_categorical'
         else:
-            output_dir = 'sentiment'
+            output_dir = 'Conferance_Data'
 
         output_file = f'merged_data_{symbol}_from_{start_date}_to_{end_date}.csv'
         os.makedirs(output_dir, exist_ok=True)
