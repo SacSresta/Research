@@ -126,7 +126,7 @@ def normal_run(lag=60):
             #No Optimation Model
             results,y_pred_dict = normal_model(X_train_scaled,X_test_scaled,y_train,y_test)
             normal_df,bt_collection = backtest_loop(y_pred_dict,X_test)
-            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test,risk = 0.024)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -160,7 +160,7 @@ def grid_run(lag=60):
             #GridSearchCV
             results,y_pred_dict = grid_model(X_train_scaled,X_test_scaled,y_train,y_test)
             grid_df,bt_collection = backtest_loop(y_pred_dict,X_test)
-            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test,risk = 0.024)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -193,7 +193,7 @@ def random_run(lag=60):
             X_train,X_test,y_train,y_test = preprocess_data_by_date(df,max_lag=lag)
             X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
             results,y_pred_dict = random_model(X_train_scaled,X_test_scaled,y_train,y_test)
-            random_df,bt_collection= backtest_loop(y_pred_dict,X_test)
+            random_df,bt_collection= risk_backtest_loop(y_pred_dict,X_test,risk = 0.024)
             risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
@@ -274,21 +274,24 @@ def run(lag=60):
 
 if __name__ == "__main__":
 
-    output_dir = os.path.join(os.getcwd(), 'master_combined_risk_test_date')
+    output_dir = os.path.join(os.getcwd(), 'master_combined_risk_test_date_0024')
     os.makedirs(output_dir, exist_ok=True)
 
     for lag in range(0,65,5):
+        '''
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal_same_test_date.csv'))
 
+        combined_collector, ticker = random_run(lag)
+        df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
+        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random_same_test_date.csv'))
+        '''
         combined_collector, ticker = grid_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_grid_same_test_date.csv'))
-        
-        combined_collector, ticker = random_run(lag)
-        df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
-        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random_same_test_date.csv'))       
+   
+               
 
 
 

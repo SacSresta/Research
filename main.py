@@ -20,7 +20,7 @@ def backtest(y_pred, X_test):
     stats = bt.run()
     return stats,bt
 
-def risk_backtest(y_pred, X_test, risk=0.20):
+def risk_backtest(y_pred, X_test, risk=0.024):
     def get_signal():
         return y_pred
 
@@ -41,12 +41,14 @@ def risk_backtest(y_pred, X_test, risk=0.20):
                     # Calculate shares based on risk percentage of total equity
                     investment_amount = current_equity * self.RISK_PER_TRADE
                     shares = int(investment_amount / price)
+                    #print(shares, "Number of shares bought")
                     stop_loss = price * (1 - self.STOP_LOSS_PCT)
+                   # print(price, "This is where we bought")
+                    #print(stop_loss, "This is where the stiop_loss is")
 
                     # Place a buy order with a protective stop-loss at 20% below entry
-                    self.buy(size=shares, sl=stop_loss)
-            else:
-                # If signal == 0 and we have an open position, close it
+                    self.buy(sl=stop_loss)
+            elif self.signal[-1] == 0:
                 if self.position:
                     self.position.close()
 
@@ -55,7 +57,7 @@ def risk_backtest(y_pred, X_test, risk=0.20):
     return stats, bt
 
 
-def risk_backtest_loop(y_pred_dict,X_test,risk = 0.20):
+def risk_backtest_loop(y_pred_dict,X_test,risk = 0.024):
     stats_l=[]
     bt_collection = {}
     for name,y_pred in y_pred_dict.items():

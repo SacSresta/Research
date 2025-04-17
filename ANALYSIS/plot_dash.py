@@ -6,15 +6,18 @@ import numpy as np
 import os
 
 path = os.getcwd()
+path = os.path.join(path,'master_combined_risk_test_date_0024')
+print(path)
+print(f'{path}\\master_combined_df_10_normal_same_test_date.csv')
 app = dash.Dash(__name__, 
     suppress_callback_exceptions=True,
-    update_title=None  # Prevents the "Updating..." message
+    update_title=None  
 )
 server = app.server
 
 # Define constants
 AVAILABLE_TICKERS = ['AAPL', 'SPY', 'NFLX', 'MSFT', 'AMZN', 'AMD','META']
-WINDOW_RANGE = list(range(5, 61, 5))
+WINDOW_RANGE = list(range(0, 61, 5))
 
 colors = {
     'background': '#F3F6FA',
@@ -85,10 +88,10 @@ app.layout = html.Div([
     'display': 'flex',
     'alignItems': 'center',
     'justifyContent': 'center',
-    'position': 'sticky',  # Makes it sticky
-    'top': '0',           # Sticks to top
-    'zIndex': '1000',     # Ensures it stays on top
-    'width': '100%'       # Full width
+    'position': 'sticky',  
+    'top': '0',           
+    'zIndex': '1000',     
+    'width': '100%'       
 }),
     
     # Content Division for Plots
@@ -102,19 +105,96 @@ app.layout = html.Div([
      State('window-input', 'value')],
     prevent_initial_call=True  # Add this line
 )
+#master_combined_df_60_grid_same_test_date
 def update_dashboard(n_clicks, ticker, window):
-    df1 = pd.read_csv(f'{path}\\master_combined_df_{window}_normal.csv')
+    df1 = pd.read_csv(f'{path}\\master_combined_df_{window}_normal_same_test_date.csv')
     df1['Type'] = 'normal'
-    df2 = pd.read_csv(f'{path}\\master_combined_df_{window}_grid.csv')
+    df2 = pd.read_csv(f'{path}\\master_combined_df_{window}_grid_same_test_date.csv')
     df2['Type'] = 'grid'
-    df3 = pd.read_csv(f'{path}\\master_combined_df_{window}_random.csv')
+    df3 = pd.read_csv(f'{path}\\master_combined_df_{window}_random_same_test_date.csv')
     df3['Type'] = 'random'
     
     df = pd.concat([df1, df2, df3], axis=0, keys=['normal', 'grid', 'random'])
     df.rename(columns={'Unnamed: 0': 'Ticker'}, inplace=True)
+    # Rename columns
+    df.rename(columns={
+        'Model_x': 'Model',
+        'Accuracy_x': 'Accuracy',
+        'Confusion Matrix_x': 'Confusion Matrix',
+        'Start_x': 'Start',
+        'End_x': 'End',
+        'Duration_x': 'Duration',
+        'Exposure Time [%]_x': 'Exposure Time [%]',
+        'Equity Final [$]_x': 'Equity Final [$]',
+        'Equity Peak [$]_x': 'Equity Peak [$]',
+        'Return [%]_x': 'Return [%]',
+        'Buy & Hold Return [%]_x': 'Buy & Hold Return [%]',
+        'Return (Ann.) [%]_x': 'Return (Ann.) [%]',
+        'Volatility (Ann.) [%]_x': 'Volatility (Ann.) [%]',
+        'CAGR [%]_x': 'CAGR [%]',
+        'Sharpe Ratio_x': 'Sharpe Ratio',
+        'Sortino Ratio_x': 'Sortino Ratio',
+        'Calmar Ratio_x': 'Calmar Ratio',
+        'Alpha [%]_x': 'Alpha [%]',
+        'Beta_x': 'Beta',
+        'Max. Drawdown [%]_x': 'Max. Drawdown [%]',
+        'Avg. Drawdown [%]_x': 'Avg. Drawdown [%]',
+        'Max. Drawdown Duration_x': 'Max. Drawdown Duration',
+        'Avg. Drawdown Duration_x': 'Avg. Drawdown Duration',
+        '# Trades_x': '# Trades',
+        'Win Rate [%]_x': 'Win Rate [%]',
+        'Best Trade [%]_x': 'Best Trade [%]',
+        'Worst Trade [%]_x': 'Worst Trade [%]',
+        'Avg. Trade [%]_x': 'Avg. Trade [%]',
+        'Max. Trade Duration_x': 'Max. Trade Duration',
+        'Avg. Trade Duration_x': 'Avg. Trade Duration',
+        'Profit Factor_x': 'Profit Factor',
+        'Expectancy [%]_x': 'Expectancy [%]',
+        'SQN_x': 'SQN',
+        'Kelly Criterion_x': 'Kelly Criterion',
+        '_strategy_x': 'Strategy',
+        '_equity_curve_x': 'Equity Curve',
+        '_trades_x': 'Trades',
+        'Accuracy_y': 'Accuracy (y)',
+        'Confusion Matrix_y': 'Confusion Matrix (y)',
+        'Start_y': 'Start (y)',
+        'End_y': 'End (y)',
+        'Duration_y': 'Duration (y)',
+        'Exposure Time [%]_y': 'Exposure Time [%] (y)',
+        'Equity Final [$]_y': 'Equity Final [$] (y)',
+        'Equity Peak [$]_y': 'Equity Peak [$] (y)',
+        'Return [%]_y': 'Return [%]_(y)',
+        'Buy & Hold Return [%]_y': 'Buy & Hold Return [%] (y)',
+        'Return (Ann.) [%]_y': 'Return (Ann.) [%] (y)',
+        'Volatility (Ann.) [%]_y': 'Volatility (Ann.) [%] (y)',
+        'CAGR [%]_y': 'CAGR [%] (y)',
+        'Sharpe Ratio_y': 'Sharpe Ratio (y)',
+        'Sortino Ratio_y': 'Sortino Ratio (y)',
+        'Calmar Ratio_y': 'Calmar Ratio (y)',
+        'Alpha [%]_y': 'Alpha [%] (y)',
+        'Beta_y': 'Beta (y)',
+        'Max. Drawdown [%]_y': 'Max. Drawdown [%] (y)',
+        'Avg. Drawdown [%]_y': 'Avg. Drawdown [%] (y)',
+        'Max. Drawdown Duration_y': 'Max. Drawdown Duration (y)',
+        'Avg. Drawdown Duration_y': 'Avg. Drawdown Duration (y)',
+        '# Trades_y': '# Trades (y)',
+        'Win Rate [%]_y': 'Win Rate [%] (y)',
+        'Best Trade [%]_y': 'Best Trade [%] (y)',
+        'Worst Trade [%]_y': 'Worst Trade [%] (y)',
+        'Avg. Trade [%]_y': 'Avg. Trade [%] (y)',
+        'Max. Trade Duration_y': 'Max. Trade Duration (y)',
+        'Avg. Trade Duration_y': 'Avg. Trade Duration (y)',
+        'Profit Factor_y': 'Profit Factor (y)',
+        'Expectancy [%]_y': 'Expectancy [%] (y)',
+        'SQN_y': 'SQN (y)',
+        'Kelly Criterion_y': 'Kelly Criterion (y)',
+        '_strategy_y': 'Strategy (y)',
+        '_equity_curve_y': 'Equity Curve (y)',
+        '_trades_y': 'Trades (y)'
+    }, inplace=True)
     df = df[df.Ticker == ticker]
     data = df[['Start', 'End','Type', 'Ticker', 'Model', 'Accuracy', 'Return [%]', 'Buy & Hold Return [%]', 'Sharpe Ratio','Max. Drawdown [%]', 'Avg. Drawdown [%]', 'Max. Drawdown Duration',
-       'Avg. Drawdown Duration']]
+       'Avg. Drawdown Duration','Return [%]_(y)']]
     
     data.reset_index(inplace=True, drop=True)
     data['Excess Return'] = data['Return [%]'] - data['Buy & Hold Return [%]']
@@ -148,9 +228,9 @@ def update_dashboard(n_clicks, ticker, window):
                     'backgroundColor': colors['background']
                 }
             ],
-            page_size=13,  # number of rows per page
-            sort_action='native',  # enables sorting
-            filter_action='native'  # enables filtering
+            page_size=13, 
+            sort_action='native',  
+            filter_action='native'  
         )
     ], style={
         'margin': '20px',
@@ -162,6 +242,7 @@ def update_dashboard(n_clicks, ticker, window):
         # Bar Plots
         html.Div([
             html.H2("Model Comparison"),
+        html.Div([
             dcc.Graph(
                 figure=px.bar(
                     data,
@@ -172,10 +253,31 @@ def update_dashboard(n_clicks, ticker, window):
                     title=f"{ticker} Return [%] by Type for period {window}"
                 ).add_hline(
                     y=data['Buy & Hold Return [%]'].mean(),
+                    annotation_text="Buy & Hold",
                     line_dash="dash",
                     line_color="red"
                 )
-            ),
+            )
+        ], style={'display': 'inline-block', 'width': '48%', 'padding': '0 10px'}),  # Left chart
+
+        html.Div([
+            dcc.Graph(
+                figure=px.bar(
+                    data,
+                    x="Model",
+                    y="Return [%]_(y)",
+                    color="Type",
+                    barmode="group",
+                    title=f"{ticker} Return [%] with Risk as 0.024 by Type for period {window}"
+                ).add_hline(
+                    y=data['Buy & Hold Return [%]'].mean(),
+                    annotation_text="Buy & Hold",
+                    line_dash="dash",
+                    line_color="red"
+                )
+            )
+        ], style={'display': 'inline-block', 'width': '48%', 'padding': '0 10px'}),  # Right chart
+
             dcc.Graph(
                 figure=px.bar(
                     data,
