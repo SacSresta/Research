@@ -165,7 +165,7 @@ def random_optimize_model(classifiers, X_train_scaled, y_train,param_grids):
 
 def create_data(data, max_lag = 60):
   # Define the number of lags you want
-  max_lag = max_lag  # For example, to create lags 1 through 5
+  max_lag = max_lag  
 
   # Create lagged features in a loop
   for i in range(1, max_lag + 1):
