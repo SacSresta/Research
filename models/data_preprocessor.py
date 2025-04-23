@@ -1,129 +1,287 @@
 import pandas as pd
 import numpy as np
-np.NaN = np.nan
-import pandas_ta as ta
-import matplotlib.pyplot as plt
-import seaborn as sns
-import argparse
-from sklearn.preprocessing import StandardScaler
-import numpy as np
-import pandas as pd
+from sklearn.preprocessing import StandardScaler,LabelEncoder
+from sklearn.model_selection import train_test_split,GridSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
+from lightgbm import LGBMClassifier
+from sklearn.model_selection import RandomizedSearchCV
+import pickle
+import joblib
+import os
+from data_pipeline.stage_01.historical_data import add_technical_indicators
+
+def classifier_models():
+    # Updated classifier dictionary
+    classifiers = {
+        'Logistic Regression': LogisticRegression(C=10, max_iter=1000, solver='liblinear'),
+        'Random Forest': RandomForestClassifier(max_depth=10, min_samples_split=10, n_estimators=50),
+        'XGBoost': XGBClassifier(learning_rate=0.01, max_depth=3, 
+                         n_estimators=100, eval_metric='logloss', 
+                         n_jobs=1),  # Prevents joblib conflicts
+        'SVM': SVC(C=10, kernel='linear', probability=True),
+        'Naive Bayes': BernoulliNB(),
+        'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3),  # Uses decision trees [[7]]
+        'K-Nearest Neighbors': KNeighborsClassifier(n_neighbors=5),  # Instance-based learning
+        'Decision Tree': DecisionTreeClassifier(max_depth=5, min_samples_split=10),  # Base tree model [[7]]
+        'AdaBoost': AdaBoostClassifier(n_estimators=50, learning_rate=0.5),  # Boosting ensemble
+        'SGD Classifier': SGDClassifier(loss='log_loss', alpha=0.001),  # Linear model with SGD [[10]]
+        'MLP': MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000),  # Neural network
+        'LGBMClassifier' :LGBMClassifier(
+        n_estimators=100, 
+        learning_rate=0.05, 
+        max_depth=5, 
+        boosting_type='gbdt'
+    )
+    
+    }
+    return classifiers
+
+def get_param_grids():
+    # Define hyperparameter grids
+    param_grids = {
+        'Logistic Regression': {
+            'C': [0.1, 1, 10], 
+            'penalty': ['l1', 'l2'],
+            'solver': ['liblinear', 'saga']
+        },
+        'Random Forest': {
+            'n_estimators': [50, 100],
+            'max_depth': [5, 10, None],
+            'min_samples_split': [2, 10],
+            'max_features': ['sqrt', 'log2']
+        },
+        'SVM': {
+            'C': [0.1, 1, 10],
+            'kernel': ['linear', 'rbf'],
+            'gamma': ['scale', 'auto']
+        },
+        'Naive Bayes': {
+            'alpha': [0.1, 0.5, 1.0]
+        },
+        'Gradient Boosting': {
+            'n_estimators': [100, 200],
+            'learning_rate': [0.05, 0.1],
+            'max_depth': [3, 5],
+            'min_samples_split': [2, 10]
+        },
+        'K-Nearest Neighbors': {
+            'n_neighbors': [3, 5, 7],
+            'weights': ['uniform', 'distance'],
+            'algorithm': ['auto', 'ball_tree', 'kd_tree'],
+            'p': [1, 2]
+        },
+        'Decision Tree': {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [5, 10, None],
+            'min_samples_split': [2, 10],
+            'max_features': [None, 'sqrt']
+        },
+        'AdaBoost': {
+            'n_estimators': [50, 100],
+            'learning_rate': [0.1, 0.5, 1.0]
+        },
+        'SGD Classifier': {
+            'alpha': [0.0001, 0.001],
+            'loss': ['log_loss', 'modified_huber'],
+            'penalty': ['l2', 'l1', 'elasticnet'],
+            'learning_rate': ['constant', 'optimal']
+        },
+        'MLP': {
+            'hidden_layer_sizes': [(100,), (50,50)],
+            'activation': ['relu', 'tanh'],
+            'solver': ['adam', 'sgd'],
+            'learning_rate_init': [0.001, 0.01],
+            'alpha': [0.0001, 0.001]
+        },
+        'XGBoost': {
+            'n_estimators': [100, 200],
+            'max_depth': [3, 6, 9],
+            'learning_rate': [0.01, 0.1, 0.3],
+            'subsample': [0.8, 1.0],
+            'colsample_bytree': [0.8, 1.0],
+            'min_child_weight': [1, 3],
+            'gamma': [0, 0.1],
+            'reg_alpha': [0, 0.1, 1.0],
+            'reg_lambda': [0, 1.0],
+            'scale_pos_weight': [1]
+        }
+    }
+    return param_grids
 
 
-def SSL(data, period):
-    data['smaHigh'] = data['High'].rolling(window=period).mean()
-    data['smaLow'] = data['Low'].rolling(window=period).mean()
-    data['sslDown'] = data.apply(lambda row: row['smaHigh'] if row['Close'] < row['smaLow'] else row['smaLow'], axis=1)
-    data['sslUp'] = data.apply(lambda row: row['smaLow'] if row['Close'] < row['smaLow'] else row['smaHigh'], axis=1)
-    data['Trend'] = data.apply(lambda row: 1 if row['smaLow'] == row['sslDown'] else -1, axis=1)
-    data['ssl_signal'] = (data['Trend'] != data['Trend'].shift(1)).astype(int)
-    return data
-
-
-
-
-def lstm_df(df):
-  X = df[['Close','sentiment_score','shifted_ssl_signal']]
-
-  # Create lagged features for the target and close price
-  X['shifted_ssl_prev'] = X['shifted_ssl_signal'].shift(1)  # Previous day's target
-  X.dropna(inplace=True)
-  return X
-
-def create_data (look_back = 14, features_per_step = 3, data=None):
-  
-    # Initialize sequences
-    look_back = 14  # 3-day window
-    features_per_step = features_per_step  # Close, shifted_ssl_prev, sentiment
-
-    X_train, y_train = [], []
-
-    X = data
-    for i in range(look_back + 1, len(X)):
-
-        # Extract sequence for current sample (i-3, i-2, i-1)
-        seq = []
-        for j in range(look_back, 0, -1):
-            # Timestep features:
-            # [Close, shifted_ssl_prev (1-day lag), sentiment (0 for first two days)]
-            close = X['Close'].iloc[i - j]
-
-            ssl_prev = X['shifted_ssl_prev'].iloc[i - j - 1] if (i - j - 1) >= 0 else 0.0
-            if j == 1:  # Current timestep (i-1 corresponding to "t" in input)
-                sentiment = X['sentiment_score'].iloc[i - 1]
-            else:
-                sentiment = 0.0
-            seq.append([close, ssl_prev, sentiment])
-        X_train.append(seq)
-
-        y_train.append(X['shifted_ssl_signal'].iloc[i].astype(int))
-
-
-    return X_train,y_train
-def convert_to_array(x,y):
-
-  return np.array(x),np.array(y)
-
-def scaling_func(x):
-  # Reshape data for scaling (batch, sequence, features) → (batch*sequence, features)
-  n_samples, n_timesteps, n_features = x.shape
-  X_reshaped = x.reshape(-1, n_features)
-
-  # Scale Close and sentiment (columns 0 and 2)
-  scaler = StandardScaler()
-  X_reshaped[:, [0, 2]] = scaler.fit_transform(X_reshaped[:, [0, 2]])
-
-  # Reshape back to original structure
-  X_scaled = X_reshaped.reshape(n_samples, n_timesteps, n_features)
-  return X_scaled
-
-
-def parse_args():
-
-    parser = argparse.ArgumentParser(description="Machine Learning or Deep Learning Preprocessor")
-    parser.add_argument('--ml', type=bool, default=False, help='it will give ml dataframe')
+def grid_optimize_model(classifiers,X_train_scaled, y_train,param_grids):
 
     
-    return parser.parse_args()
+    # Dictionary to store best models
+    best_models = {}
 
-def preprocess_data(data = None, look_back = 4 ,ml=False, split = 0.8, path = None):
-    if path:
-        df = pd.read_csv(path)
-    else:
-        df = data
-    df.Date = pd.to_datetime(df.Date)
-    df = df.drop(columns=["Ticker", "headline"])
+    for name, clf in classifiers.items():
+        print(f"Optimizing {name}...")
+        
+        if name in param_grids:
+            grid_search = GridSearchCV(clf, param_grids[name], cv=5, scoring='accuracy', n_jobs=-1)
+            grid_search.fit(X_train_scaled, y_train)
+            best_models[name] = grid_search.best_estimator_  # Save best model
+            print(f"Best parameters for {name}: {grid_search.best_params_}")
+        else:
+            clf.fit(X_train_scaled, y_train)
+            best_models[name] = clf
+    print(f"No hyperparameters to tune for {name}")
+    return best_models
+
+
+
+def random_optimize_model(classifiers, X_train_scaled, y_train,param_grids):
+
+    best_models = {}
+
+    for name, clf in classifiers.items():
+        print(f"Optimizing {name}...")
+        
+        if name in param_grids:
+            search = RandomizedSearchCV(clf, param_distributions=param_grids[name], 
+                                        n_iter=10, cv=5, scoring='accuracy', 
+                                        n_jobs=4, verbose=2, random_state=42)
+            search.fit(X_train_scaled, y_train)
+            best_models[name] = search.best_estimator_
+            print(f"Best parameters for {name}: {search.best_params_}")
+        else:
+            clf.fit(X_train_scaled, y_train)
+            best_models[name] = clf
+            print(f"No hyperparameters to tune for {name}")
+
+    return best_models
+
+
+def create_data(data, max_lag = 60):
+  max_lag = max_lag  
+
+  for i in range(1, max_lag + 1):
+      data[f'Close_lag{i}'] = data['Close'].shift(i)
+
+  y = data['shifted_direction'].iloc[max_lag:].astype(int)
+  X = data.drop(columns = ['shifted_direction']).iloc[max_lag:]
+  return X,y
+
+def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_SPY_from_2015-01-01_to_2025-03-01.csv', ind = False):
+    df = pd.read_csv(path)
+    df['shifted_direction'] = df['Direction'].shift(-1)
+    df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
+        'Downtrend', 'headline','Adj Close','Direction','Ticker'])
+    df['Date'] = pd.to_datetime(df['Date'])
+    if ind:
+        df = add_technical_indicators(df)
+    df.dropna(inplace=True)
+    return df
+
+def preprocess_data(df,max_lag=60):
+    data = df.copy()
+    X,y = create_data(data, max_lag=max_lag)
+    encoder = LabelEncoder()
+    y = encoder.fit_transform(y)
+    X.set_index('Date',inplace=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, shuffle = False)
+    return X_train,X_test,y_train,y_test
+
+def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
+    data = df.copy()
     
-    # Compute SSL indicator
-    df = SSL(data=df.copy(), period=10)
-    
-    
-    # Shift SSL signal for prediction alignment
-    df["shifted_ssl_signal"] = df.Trend.shift(-1)
-    
-    # Drop NaN values and reset index
-    df = df.dropna().reset_index(drop=True)
+    X, y = create_data(data, max_lag=max_lag)
+    encoder = LabelEncoder()
+    y = encoder.fit_transform(y)
 
-    if ml:  # ✅ No need to write `== True`
-        return df
-    else:  # ✅ Correct indentation
-        data = lstm_df(df)
-        x, y = create_data(data=data, look_back=look_back)
+    X['Date'] = pd.to_datetime(X['Date'])
+    X.set_index('Date', inplace=True)
 
-        X, y = convert_to_array(x, y)
-        X_scaled = scaling_func(X)
+    X_train = X[X.index < test_start_date]
+    X_test = X[X.index >= test_start_date]
+    y_train = y[:len(X_train)]
+    y_test = y[len(X_train):]
+    print(X_test.index[0])
+    print(X_test.shape)
 
-        train_size = int(split * len(X_scaled))
-        X_train, X_test = X_scaled[:train_size], X_scaled[train_size:]
+    return X_train, X_test, y_train, y_test
 
-        y_train, y_test = y[:train_size].reshape(-1, 1), y[train_size:].reshape(-1, 1)
 
-        return X_train,y_train,X_test,y_test
+def scaling_function(X_train, X_test):
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    return X_train_scaled,X_test_scaled
 
-   
+def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
+    results = []
+    y_pred_dict = {}
+
+    for name, clf in classifiers.items():
+        clf.fit(X_train_scaled, y_train)
+
+        y_pred = clf.predict(X_test_scaled)
+
+        accuracy = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred)
+
+        results.append((name, accuracy, cm))
+
+        print(f"\n{name} Performance:")
+        print(f"Accuracy: {accuracy:.4f}")
+        print("Confusion Matrix:")
+        print(cm)
+        print(report)
+        y_pred_dict[name] = y_pred
+    df = pd.DataFrame(results,columns=['Model', 'Accuracy', 'Confusion Matrix'])
+    return df,y_pred_dict  
+
+def main():
+    df = get_data(path=r'C:\Users\sachi\Documents\Researchcode\Conferance_Data\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv',ind=True)
+    X_train,X_test,y_train,y_test = preprocess_data(df)
+    print(X_train)
+    X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
+    print(X_train_scaled.shape,X_test_scaled.shape,y_train.shape,y_test.shape)
+    return
+    classifier = classifier_models()
+    os.makedirs('saved_models', exist_ok=True)
+    results = train_model(classifiers=classifier, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+    results.to_csv('model_summary_no_opt.csv', mode='w',
+               index=True)
+    best_base = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(classifier[best_base], f"saved_models/best_base_{best_base.replace(' ', '_')}.pkl")
+    param_grids = get_param_grids()
+    print("Working on optimizing with GridSearchCV")
+    best_models = grid_optimize_model(classifier,X_train_scaled, y_train,param_grids=param_grids)
+    results,y_pred_dict = train_model(classifiers=best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+
+    results.to_csv('model_summary_grid_opt.csv', mode='w',
+               index=True)
+    best_grid = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(best_models[best_grid], f"saved_models/best_grid_{best_grid.replace(' ', '_')}.pkl")
+    print('-----------------------------')  
+    print("Working on optimizing with RandomSearchCV")
+    random_best_models = random_optimize_model(classifier,X_train_scaled, y_train,param_grids=param_grids)
+    results = train_model(classifiers=random_best_models, X_train_scaled=X_train_scaled, X_test_scaled=X_test_scaled,y_train=y_train,y_test=y_test)
+    print(results)
+    results.to_csv('model_summary_rand_opt.csv', mode='w',
+               index=True)
+    best_random = results.loc[results['Accuracy'].idxmax(), 'Model']
+    joblib.dump(random_best_models[best_random], f"saved_models/best_random_{best_random.replace(' ', '_')}.pkl")
+    print('--------------------------')
+
+
+
+
 
 if __name__ == "__main__":
-    args = parse_args()
-    
-    X_train,y_train,X_test,y_test = preprocess_data(path='/home/sacsresta/Documents/RESEARCH/Project/sentiment/merged_data_AAPL_from_2024-01-01_to_2025-01-01.csv')
-    print(X_train)
+    main()

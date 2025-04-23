@@ -1,5 +1,6 @@
 import time
-from data_pipeline.stage_03_score.score import run_sentiment_analysis
+from tqdm import tqdm
+from data_pipeline.stage_03_score.score import run_sentiment_analysis,run_sentiment_analysis_categorical
 
 ticker_configs = {
     "AAPL": {
@@ -91,8 +92,7 @@ start_date = "2015-01-01"
 end_date = "2025-03-01"
 
 def process_tickers():
-    """Process sentiment analysis for all configured tickers with error handling"""
-    for symbol, config in ticker_configs.items():
+    for symbol, config in tqdm(ticker_configs.items(), desc="Processing Tickers"):
         try:
             print(f"\n{'='*50}")
             print(f"Processing {symbol}")
@@ -101,11 +101,11 @@ def process_tickers():
             
             start_time = time.time()
             
-            run_sentiment_analysis(
+            run_sentiment_analysis_categorical(
                 symbol=symbol,
                 start_date=start_date,
                 end_date=end_date,
-                categorical=False,
+                categorical=True,
                 custom_keywords=None,
                 false_positives=None
             )
@@ -116,6 +116,8 @@ def process_tickers():
         except Exception as e:
             print(f"Error processing {symbol}: {str(e)}")
             continue  
+        finally:
+            print(f"{'='*50}\n")
 
 if __name__ == "__main__":
     print("Starting sentiment analysis pipeline...")

@@ -60,9 +60,6 @@ def get_historical_data(start_date='2020-01-01', symbol='AAPL', end_date=datetim
         else:
             new_start_date_dt = datetime.strptime(new_start_date, "%Y-%m-%d") + timedelta(days=1)
             start_date = new_start_date_dt.strftime("%Y-%m-%d")
-
-        print("Fetching next batch starting from:", start_date)
-
     return json_collector
 
 
