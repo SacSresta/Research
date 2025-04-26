@@ -211,14 +211,14 @@ def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
     print(X_test.index[0])
     print(X_test.shape)
 
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test,encoder
 
 
 def scaling_function(X_train, X_test):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    return X_train_scaled,X_test_scaled
+    return X_train_scaled,X_test_scaled,scaler
 
 def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
     results = []
@@ -244,12 +244,19 @@ def train_model(classifiers,X_train_scaled,X_test_scaled,y_train,y_test):
     df = pd.DataFrame(results,columns=['Model', 'Accuracy', 'Confusion Matrix'])
     return df,y_pred_dict  
 
+def save_artifacts(ticker, lag, scaler, encoder, path_prefix='artifact'):
+    os.makedirs(path_prefix, exist_ok=True)
+    joblib.dump(scaler, os.path.join(path_prefix, f'scaler_{ticker}_{lag}.pkl'))
+    joblib.dump(encoder, os.path.join(path_prefix, f'encoder_{ticker}_{lag}.pkl'))
+    print(f"Artifacts saved for {ticker}_{lag} in '{path_prefix}/'")
+
 def main():
     df = get_data(path=r'C:\Users\sachi\Documents\Researchcode\Conferance_Data\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv',ind=True)
-    X_train,X_test,y_train,y_test = preprocess_data(df)
+    X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df)
     print(X_train)
-    X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
+    X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
     print(X_train_scaled.shape,X_test_scaled.shape,y_train.shape,y_test.shape)
+    
     return
     classifier = classifier_models()
     os.makedirs('saved_models', exist_ok=True)

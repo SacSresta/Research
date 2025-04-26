@@ -1,4 +1,4 @@
-from models.categorical_data_preprocessor import preprocess_data_by_date, scaling_function,preprocess_data,classifier_models,train_model,grid_optimize_model,random_optimize_model,get_param_grids,get_data
+from models.categorical_data_preprocessor import preprocess_data_by_date, scaling_function,preprocess_data,classifier_models,train_model,grid_optimize_model,random_optimize_model,get_param_grids,get_data,save_artifacts
 from backtesting import Backtest,Strategy
 import pandas as pd
 import os
@@ -117,8 +117,9 @@ def normal_run(lag=60):
             ticker = filepath.split('_')[2]
             print(f"Loading Data for {ticker}, testing on number of lag {lag}, saving path is {saving_path}")
             df = get_data(path,ind=True)
-            X_train,X_test,y_train,y_test = preprocess_data_by_date(df,max_lag=lag)
-            X_train_scaled,X_test_scaled = scaling_function(X_train,X_test)
+            X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df,max_lag=lag)
+            X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
+            save_artifacts(ticker,lag,scaler,encoder)
             results,y_pred_dict,best_models_params = normal_model(X_train_scaled,X_test_scaled,y_train,y_test)
             save_path = os.path.join('saved_params', 'normal')
             os.makedirs(save_path, exist_ok=True)
@@ -229,7 +230,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     for lag in range(0,65,5):
-        
+        '''
         combined_collector, ticker = grid_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_grid_same_test_date.csv'))
@@ -241,6 +242,6 @@ if __name__ == "__main__":
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal_same_test_date.csv'))
-        '''
+        
         
         
