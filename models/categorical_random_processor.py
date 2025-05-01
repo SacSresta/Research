@@ -19,7 +19,7 @@ import pickle
 import joblib
 import os
 from data_pipeline.stage_01.historical_data import add_technical_indicators
-
+import time
 def classifier_models():
     classifiers = {
         'Logistic Regression': LogisticRegression(C=10, max_iter=1000, solver='liblinear', random_state=42),
@@ -195,9 +195,12 @@ def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
     data = df.copy()
     
     X, y = create_data(data, max_lag=max_lag)
-    encoder = LabelEncoder()
-    X['sentiment_class'] = encoder.fit_transform(X['sentiment_class'])
-    y = encoder.fit_transform(y)
+    
+    encoder_X = LabelEncoder()
+    encoder_y = LabelEncoder()
+    
+    X['sentiment_class'] = encoder_X.fit_transform(X['sentiment_class'])
+    y = encoder_y.fit_transform(y)
 
     X['Date'] = pd.to_datetime(X['Date'])
     X.set_index('Date', inplace=True)
@@ -206,10 +209,11 @@ def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
     X_test = X[X.index >= test_start_date]
     y_train = y[:len(X_train)]
     y_test = y[len(X_train):]
+    
     print(X_test.index[0])
     print(X_test.shape)
 
-    return X_train, X_test, y_train, y_test,encoder
+    return X_train, X_test, y_train, y_test, encoder_y, encoder_X
 
 
 def scaling_function(X_train, X_test):
@@ -250,7 +254,7 @@ def save_artifacts(ticker, lag, scaler, encoder, path_prefix='artifact'):
 
 def main():
     df = get_data(path=r'C:\Users\sachi\Documents\Researchcode\Conferance_Data\merged_data_AAPL_from_2015-01-01_to_2025-03-01.csv',ind=True)
-    X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df)
+    X_train,X_test,y_train,y_test,encoder_y, encoder_X = preprocess_data_by_date(df)
     print(X_train)
     X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
     print(X_train_scaled.shape,X_test_scaled.shape,y_train.shape,y_test.shape)

@@ -1,9 +1,0 @@
-Model,Configuration,Ticker,Lag,Type
-Logistic Regression,"LogisticRegression(C=0.1, max\_iter=1000, solver='saga')",AMD,0,GRID
-SGD Classifier,"SGDClassifier(loss='log\_loss', penalty='l1')",AAPLE,30,GRID
-Random Forest,"RandomForestClassifier(max\_depth=5, n\_estimators=50)",MSFT,25,GRID
-Logistic Regression,"LogisticRegression(C=0.1, max\_iter=1000, penalty='l1', solver='liblinear')",NVDA,25,GRID
-MLP,MLPClassifier(max\_iter=1000),GOOGLE,5,NORMAL
-Logistic Regression,"LogisticRegression(C=10, max\_iter=1000, solver='liblinear')",META,10,NORMAL
-Random Forest,RandomForestClassifier(max\_depth=5),AMZN,5,RANDOM
-Naive Bayes,BernoulliNB(alpha=0.1),NFLX,50,RANDOM

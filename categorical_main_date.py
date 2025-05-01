@@ -117,9 +117,10 @@ def normal_run(lag=60):
             ticker = filepath.split('_')[2]
             print(f"Loading Data for {ticker}, testing on number of lag {lag}, saving path is {saving_path}")
             df = get_data(path,ind=True)
-            X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df,max_lag=lag)
+            X_train,X_test,y_train,y_test,encoder_y, encoder_X = preprocess_data_by_date(df, max_lag=lag)
             X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
-            save_artifacts(ticker,lag,scaler,encoder)
+            
+            save_artifacts(ticker,lag,scaler,encoder_X)
             results,y_pred_dict,best_models_params = normal_model(X_train_scaled,X_test_scaled,y_train,y_test)
             save_path = os.path.join('saved_params', 'normal')
             os.makedirs(save_path, exist_ok=True)
@@ -229,8 +230,8 @@ if __name__ == "__main__":
     output_dir = os.path.join(os.getcwd(), 'master_combined_risk_test_date_0024_check')
     os.makedirs(output_dir, exist_ok=True)
 
-    for lag in range(50,65,5):
-    
+    for lag in range(0,65,5):
+        '''
         combined_collector, ticker = grid_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_grid_same_test_date.csv'))
@@ -238,7 +239,7 @@ if __name__ == "__main__":
         combined_collector, ticker = random_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random_same_test_date.csv'))
-
+        '''
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal_same_test_date.csv'))

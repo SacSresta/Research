@@ -1,0 +1,11 @@
+Model,Configuration,Ticker,Lag
+Logistic Regression,"LogisticRegression(C=0.1, max\_iter=1000, penalty='l1', random\_state=42, solver='liblinear')",NVDA,20
+SGD Classifier,"SGDClassifier(alpha=0.001, loss='log\_loss', random\_state=42)",AAPL,30
+XGBoost,"XGBClassifier(learning\_rate=0.01, max\_depth=3, n\_estimators=100, eval\_metric='logloss')",AMZN,15
+K-Nearest Neighbors,KNeighborsClassifier(),SPY,15
+MLP,"MLPClassifier(activation='tanh', max\_iter=1000, random\_state=42, solver='sgd')",AMD,30
+Decision Tree,"DecisionTreeClassifier(max\_depth=10, min\_samples\_split=10, random\_state=42)",GOOGL,25
+SVM,"SVC(C=10, kernel='linear', probability=True, random\_state=42)",META,5
+Gradient Boosting,"GradientBoostingClassifier(learning\_rate=0.05, min\_samples\_split=10, random\_state=42)",MSFT,15
+Naive Bayes,BernoulliNB(alpha=0.1),NFLX,50
+Gradient Boosting,"GradientBoostingClassifier(learning\_rate=0.05, max\_depth=5, n\_estimators=200, random\_state=42)",TSLA,15

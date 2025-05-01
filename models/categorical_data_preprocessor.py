@@ -27,15 +27,15 @@ def classifier_models():
         'Random Forest': RandomForestClassifier(max_depth=10, min_samples_split=10, n_estimators=50),
         'XGBoost': XGBClassifier(learning_rate=0.01, max_depth=3, 
                          n_estimators=100, eval_metric='logloss', 
-                         n_jobs=1),  # Prevents joblib conflicts
+                         n_jobs=1), 
         'SVM': SVC(C=10, kernel='linear', probability=True),
         'Naive Bayes': BernoulliNB(),
-        'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3),  # Uses decision trees [[7]]
-        'K-Nearest Neighbors': KNeighborsClassifier(n_neighbors=5),  # Instance-based learning
-        'Decision Tree': DecisionTreeClassifier(max_depth=5, min_samples_split=10),  # Base tree model [[7]]
-        'AdaBoost': AdaBoostClassifier(n_estimators=50, learning_rate=0.5),  # Boosting ensemble
-        'SGD Classifier': SGDClassifier(loss='log_loss', alpha=0.001),  # Linear model with SGD [[10]]
-        'MLP': MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000),  # Neural network
+        'Gradient Boosting': GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3),  
+        'K-Nearest Neighbors': KNeighborsClassifier(n_neighbors=5),  
+        'Decision Tree': DecisionTreeClassifier(max_depth=5, min_samples_split=10),  
+        'AdaBoost': AdaBoostClassifier(n_estimators=50, learning_rate=0.5),  
+        'SGD Classifier': SGDClassifier(loss='log_loss', alpha=0.001),  
+        'MLP': MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000),
         'LGBMClassifier' :LGBMClassifier(
         n_estimators=100, 
         learning_rate=0.05, 
