@@ -26,6 +26,12 @@ load_dotenv()
 api = os.getenv('ALPACA_API_KEY')
 secret = os.getenv('ALPACA_SECRET_KEY')
 
+def close_order_sell(symbol,qty = 10,api = api,secret = secret):
+
+    tcliet = TradingClient(api,secret)
+
+    params = OrderRequest(symbol=symbol,qty=qty,side=OrderSide.SELL,type=OrderType.MARKET, time_in_force=TimeInForce.DAY)
+    tcliet.submit_order(params)
 def create_order_buy(symbol,qty = 10,api = api,secret = secret):
 
     tcliet = TradingClient(api,secret)
@@ -154,7 +160,9 @@ if __name__ == "__main__":
             open_position = dict(get_status()[0])['symbol']
             print(open_position)
             if open_position == ticker:
-                pass
+                if y_pred == 0:
+                    print(f"Closing Signal Received for {ticker}")
+                    close_order_sell(ticker)
             elif open_position != ticker:
                 if y_pred == 1:
                     print(f"Buying Signal Received for {ticker}")
