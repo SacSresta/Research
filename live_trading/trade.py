@@ -157,13 +157,16 @@ if __name__ == "__main__":
             y_pred = model.predict(X_test_scaled)
             print(y_pred)
             print(ticker)
-            open_position = dict(get_status()[0])['symbol']
+            open_positions = get_status()
+            open_position = [dict(position) for position in open_positions]
+            open_position_df = pd.DataFrame(open_position)
+            open_position = open_position_df.symbol.values
             print(open_position)
-            if open_position == ticker:
+            if ticker in open_position:
                 if y_pred == 0:
                     print(f"Closing Signal Received for {ticker}")
                     close_order_sell(ticker)
-            elif open_position != ticker:
+            elif ticker not in open_position:
                 if y_pred == 1:
                     print(f"Buying Signal Received for {ticker}")
                     create_order_buy(ticker)
