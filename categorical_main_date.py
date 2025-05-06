@@ -158,7 +158,7 @@ def grid_run(lag=60):
             ticker = filepath.split('_')[2]
             print(f"Loading Data for {ticker}, testing on number of lag {lag}, saving path is {saving_path}")
             df = get_data(path,ind=True)
-            X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df,max_lag=lag)
+            X_train,X_test,y_train,y_test,encoder_y, encoder_X = preprocess_data_by_date(df, max_lag=lag)
             X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
             results,y_pred_dict,best_models_params = grid_model(X_train_scaled,X_test_scaled,y_train,y_test)
             save_path = os.path.join('saved_params', 'grid')
@@ -198,7 +198,7 @@ def random_run(lag=60):
             ticker = filepath.split('_')[2]
             print(f"Loading Data for {ticker}, testing on number of lag {lag}, saving path is {saving_path}")
             df = get_data(path,ind=True)
-            X_train,X_test,y_train,y_test,encoder = preprocess_data_by_date(df,max_lag=lag)
+            X_train,X_test,y_train,y_test,encoder_y, encoder_X = preprocess_data_by_date(df, max_lag=lag)
             X_train_scaled,X_test_scaled,scaler = scaling_function(X_train,X_test)
             results,y_pred_dict,best_models_params = random_model(X_train_scaled,X_test_scaled,y_train,y_test)
             save_path = os.path.join('saved_params', 'random')
@@ -206,8 +206,8 @@ def random_run(lag=60):
             
             with open(os.path.join(save_path, f'best_model_params_{lag}_{ticker}.txt'), 'w') as f:
                 f.write(pformat(best_models_params))
-            random_df,bt_collection= risk_backtest_loop(y_pred_dict,X_test,risk = 0.024)
-            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test)
+            random_df,bt_collection= backtest_loop(y_pred_dict,X_test)
+            risk_df,bt_collection = risk_backtest_loop(y_pred_dict,X_test,risk = 0.024)
             actual,_ = backtest(y_test,X_test)
             actual['Model'] = 'Actual'
             actual = pd.DataFrame(actual).T
@@ -235,14 +235,15 @@ if __name__ == "__main__":
         combined_collector, ticker = grid_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_grid_same_test_date.csv'))
-
-        combined_collector, ticker = random_run(lag)
-        df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
-        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random_same_test_date.csv'))
-        '''
         combined_collector, ticker = normal_run(lag)
         df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
         df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_normal_same_test_date.csv'))
+        '''
+        combined_collector, ticker = random_run(lag)
+        df = pd.concat(combined_collector.values(),axis=0, keys=list(combined_collector.keys()))
+        df.to_csv(os.path.join(output_dir,f'master_combined_df_{lag}_random_same_test_date.csv'))
+        
+        
         
         
         
