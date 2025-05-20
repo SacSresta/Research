@@ -172,11 +172,39 @@ def create_data(data, max_lag = 60):
   return X,y
 
 def get_data(path=r'C:\Users\sachi\Documents\Researchcode\sentiment\merged_data_SPY_from_2015-01-01_to_2025-03-01.csv', ind = False):
-    df = pd.read_csv(path)
+    if path:
+        df = pd.read_csv(path)
     df['shifted_direction'] = df['Direction'].shift(-1)
-    df = df.drop(columns=['Supertrend','UpperBand', 'LowerBand', 'Uptrend',
-        'Downtrend', 'headline','Adj Close','Direction','Ticker'])
-    df['Date'] = pd.to_datetime(df['Date'])
+
+    if 'Ticker' in df.columns:
+        df = df.drop(columns=['Supertrend', 'UpperBand', 'LowerBand', 'Uptrend',
+                            'Downtrend', 'headline', 'Adj Close', 'Direction', 'Ticker'])
+    else:
+        df = df.drop(columns=['Supertrend', 'UpperBand', 'LowerBand', 'Uptrend',
+                            'Downtrend', 'headline', 'Adj Close', 'Direction'])
+
+    if 'Date' in df.columns and not df['Date'].empty:
+        df['Date'] = pd.to_datetime(df['Date'])
+
+    if ind:
+        df = add_technical_indicators(df)
+    df.dropna(inplace=True)
+    return df
+
+def get_fx_data(df,ind = False):
+
+    df['shifted_direction'] = df['Direction'].shift(-1)
+
+    if 'Ticker' in df.columns:
+        df = df.drop(columns=['Supertrend', 'UpperBand', 'LowerBand', 'Uptrend',
+                            'Downtrend', 'headline', 'Adj Close', 'Direction', 'Ticker'])
+    else:
+        df = df.drop(columns=['Supertrend', 'UpperBand', 'LowerBand', 'Uptrend',
+                            'Downtrend', 'Direction'])
+
+    if 'Date' in df.columns and not df['Date'].empty:
+        df['Date'] = pd.to_datetime(df['Date'])
+
     if ind:
         df = add_technical_indicators(df)
     df.dropna(inplace=True)
@@ -204,6 +232,28 @@ def preprocess_data_by_date(df, max_lag=60, test_start_date='2022-01-01'):
 
     X['Date'] = pd.to_datetime(X['Date'])
     X.set_index('Date', inplace=True)
+
+    X_train = X[X.index < test_start_date]
+    X_test = X[X.index >= test_start_date]
+    y_train = y[:len(X_train)]
+    y_test = y[len(X_train):]
+    
+    print(X_test.index[0])
+    print(X_test.shape)
+
+    return X_train, X_test, y_train, y_test, encoder_y, encoder_X
+def preprocess_data_by_date_forex(df, max_lag=60, test_start_date='2022-01-01'):
+    data = df.copy()
+    
+    X, y = create_data(data, max_lag=max_lag)
+    
+    encoder_X = LabelEncoder()
+    encoder_y = LabelEncoder()
+
+    y = encoder_y.fit_transform(y)
+
+    X['Time'] = pd.to_datetime(X['Time'])
+    X.set_index('Time', inplace=True)
 
     X_train = X[X.index < test_start_date]
     X_test = X[X.index >= test_start_date]

@@ -1,6 +1,10 @@
 import joblib
 import os
 
+import pandas as pd
+
+data  = pd.read_csv(r'C:\Users\sachi\Documents\Researchcode\notebook\best_models.csv')
+csv_files = pd.read_csv("table (2).csv")
 for index, row in new_df.iterrows():
     ticker = row['Ticker_x']
     lag = row['lag']
